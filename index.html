@@ -8,8 +8,6 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Mi lectura">
 <meta name="theme-color" content="#f5f4ef">
-<link rel="icon" type="image/png" href="/icon.png">
-<link rel="apple-touch-icon" href="/icon.png">
 <title>Mi lectura bíblica</title>
 <style>
 :root{
@@ -302,8 +300,8 @@ function mergeStates(a,b){
 var KEY="miLecturaBiblica_v1";
 var CODEKEY="miLecturaBiblica_codigo";
 var ASKEDKEY="miLecturaBiblica_syncAsked";
-var SUPA_URL="https://wkdhfjlbjceggvbicjuz.supabase.co";
-var SUPA_KEY="sb_publishable_lC0kZIi3TabHl2X3x-ORBw_1rSdrIXk";
+var SUPA_URL="https://yxtdygqnnnuepeoqqbve.supabase.co";
+var SUPA_KEY="sb_publishable_XR77YLARzEeHNMqXcWjczw_7hlPV_w5";
 
 var st=load();
 var curBook=-1;
@@ -366,19 +364,30 @@ async function doSyncPush(){
   syncing=false;
   if(!document.getElementById("view-settings").classList.contains("hidden")) renderSettings();
 }
-async function doSyncPull(silent){
-  if(!syncCode) return;
+async function doSyncPull(){
+  if(!syncCode||syncing) return;
   syncing=true; lastSyncErr=null;
   try{
     var remote=await cloudPull(syncCode);
-    if(remote){ st=mergeStates(st,remote); save(); if(!silent){showHome();} }
+    if(remote){ st=mergeStates(st,remote); save(); }
     lastSyncedAt=new Date();
   }catch(e){ lastSyncErr=e.message; }
   syncing=false;
-  if(!document.getElementById("view-settings").classList.contains("hidden")) renderSettings();
+  refreshCurrentView();
+}
+function refreshCurrentView(){
+  if(!document.getElementById("view-home").classList.contains("hidden")) renderHome();
+  else if(!document.getElementById("view-book").classList.contains("hidden")) renderBook();
+  else if(!document.getElementById("view-settings").classList.contains("hidden")) renderSettings();
 }
 function syncStartupCheck(){
-  if(syncCode){ doSyncPull(true); }
+  if(syncCode){
+    doSyncPull();
+    setInterval(function(){ if(document.visibilityState==="visible") doSyncPull(); },20000);
+    document.addEventListener("visibilitychange",function(){ if(document.visibilityState==="visible") doSyncPull(); });
+    window.addEventListener("focus",function(){ doSyncPull(); });
+    window.addEventListener("online",function(){ doSyncPull(); });
+  }
   else if(!localStorage.getItem(ASKEDKEY)){ showSyncSetup(); }
 }
 function showSyncSetup(){
@@ -669,7 +678,7 @@ function renderSettings(){
       '</div>'+
       '<button class="btn danger" id="syncOffBtn">Dejar de sincronizar este dispositivo</button>';
     document.getElementById("syncCopyBtn").onclick=syncCopyCode;
-    document.getElementById("syncNowBtn").onclick=function(){ doSyncPull(false); };
+    document.getElementById("syncNowBtn").onclick=function(){ doSyncPull(); };
     document.getElementById("syncOffBtn").onclick=syncDisconnect;
   }
 }
