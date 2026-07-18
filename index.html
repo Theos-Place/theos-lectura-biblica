@@ -14,23 +14,30 @@
   --bg:#f5f4ef; --card:#ffffff; --card2:#f1efe8; --text:#2c2c2a; --muted:#8a887f; --sec:#5f5e5a;
   --border:#e3e1d8; --green-bg:#E1F5EE; --green-tx:#085041; --green-sub:#0F6E56; --green:#1D9E75;
   --pur-bg:#EEEDFE; --pur-tx:#3C3489; --pur-sub:#534AB7; --pur:#7F77DD; --danger:#A32D2D;
+  --brand:#9A4B3B; --brand-bg:#F7E8E3; --brand-tx:#7A3626; --brand-sub:#A85B49;
+  --at-bg:#FBF0DA; --at-tx:#7C5A1D; --at-line:#C08A2E;
+  --nt-bg:#E4F0F1; --nt-tx:#2E5F66; --nt-line:#3F7C86;
 }
 @media (prefers-color-scheme: dark){
   :root{
     --bg:#1b1b1d; --card:#28282b; --card2:#333336; --text:#ececea; --muted:#98968d; --sec:#c2c0b8;
     --border:#3c3c40; --green-bg:#0c4030; --green-tx:#9FE1CB; --green-sub:#5DCAA5; --green:#1D9E75;
     --pur-bg:#2d2a52; --pur-tx:#CECBF6; --pur-sub:#AFA9EC; --pur:#7F77DD; --danger:#F09595;
+    --brand:#D98F7D; --brand-bg:#3A2620; --brand-tx:#EFC5B8; --brand-sub:#D98F7D;
+    --at-bg:#332C18; --at-tx:#EBCE8C; --at-line:#C79A48;
+    --nt-bg:#172C2F; --nt-tx:#A9D6DB; --nt-line:#4E96A1;
   }
 }
 *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
 html,body{margin:0; padding:0; background:var(--bg); color:var(--text);
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-size:16px;}
 body{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);}
-.wrap{max-width:640px; margin:0 auto; padding:16px;}
+.wrap{max-width:920px; margin:0 auto; padding:16px;}
 .hidden{display:none !important;}
 .topbar{display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;}
-.topbar h1{font-size:20px; font-weight:600; margin:0;}
-.iconbtn{background:none; border:none; color:var(--sec); font-size:22px; padding:6px; cursor:pointer;}
+.topbar h1{font-size:20px; font-weight:600; margin:0; display:flex; align-items:center; gap:8px;}
+.topbar h1 svg{flex:none;}
+.iconbtn{background:none; border:none; color:var(--brand); font-size:22px; padding:6px; cursor:pointer;}
 .backrow{display:flex; align-items:center; gap:8px; margin-bottom:10px;}
 .backbtn{background:none; border:none; color:var(--sec); font-size:16px; padding:6px 6px 6px 0; cursor:pointer;}
 .cards{display:flex; gap:8px; margin-bottom:14px;}
@@ -38,10 +45,21 @@ body{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-i
 .card .lbl{font-size:12px; color:var(--muted);}
 .card .val{font-size:24px; font-weight:600; margin:2px 0;}
 .card .sub{font-size:11px; color:var(--muted);}
+.card.brand{background:var(--brand-bg); border-color:transparent;}
+.card.brand .lbl,.card.brand .sub{color:var(--brand-sub);}
+.card.brand .val{color:var(--brand-tx);}
+.card.at{background:var(--at-bg); border-color:transparent;}
+.card.at .lbl,.card.at .sub{color:var(--at-line);}
+.card.at .val{color:var(--at-tx);}
+.card.nt{background:var(--nt-bg); border-color:transparent;}
+.card.nt .lbl,.card.nt .sub{color:var(--nt-line);}
+.card.nt .val{color:var(--nt-tx);}
 .seg{display:flex; background:var(--card2); border-radius:10px; padding:3px; margin-bottom:14px;}
 .seg button{flex:1; border:none; background:none; padding:8px 4px; font-size:14px; color:var(--sec); border-radius:8px; cursor:pointer;}
 .seg button.on{background:var(--card); font-weight:600; color:var(--text); box-shadow:0 1px 2px rgba(0,0,0,0.08);}
-.sect{font-size:12px; color:var(--muted); margin:14px 2px 8px; text-transform:uppercase; letter-spacing:0.5px;}
+.sect{font-size:12px; color:var(--muted); margin:14px 2px 8px; text-transform:uppercase; letter-spacing:0.5px; font-weight:600;}
+.sect.sect-at{color:var(--at-tx);}
+.sect.sect-nt{color:var(--nt-tx);}
 .grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:8px;}
 .tile{border-radius:10px; padding:10px; border:1.5px solid transparent; cursor:pointer; background:var(--card2);}
 .tile .bn{font-size:14px; font-weight:600; color:var(--sec); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
@@ -55,6 +73,8 @@ body{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-i
 .tile.reread{background:var(--green-bg); border-color:var(--pur);}
 .tile.reread .bn{color:var(--green-tx);}
 .tile.reread .bs{color:var(--pur-sub);}
+.tile.pend-at{border-left:3px solid var(--at-line);}
+.tile.pend-nt{border-left:3px solid var(--nt-line);}
 .bookhead .name{font-size:20px; font-weight:600;}
 .bookhead .big{font-size:30px; font-weight:600; margin-right:8px;}
 .bookhead .frac{font-size:13px; color:var(--muted);}
@@ -90,10 +110,10 @@ body{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-i
 </style>
 </head>
 <body>
-
+ 
 <div class="wrap" id="view-home">
   <div class="topbar">
-    <h1>Mi lectura bíblica</h1>
+    <h1><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--brand)"><path d="M12 7c-2-2-5-2-8-1v13c3-1 6-1 8 1V7z"/><path d="M12 7c2-2 5-2 8-1v13c-3-1-6-1-8 1V7z"/></svg>Mi lectura bíblica</h1>
     <button class="iconbtn" onclick="showSettings()" aria-label="Ajustes">&#9881;</button>
   </div>
   <div class="cards" id="statcards"></div>
@@ -106,7 +126,7 @@ body{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-i
   <div id="booklists"></div>
   <div class="foot" id="footinfo"></div>
 </div>
-
+ 
 <div class="wrap hidden" id="view-book">
   <div class="backrow">
     <button class="backbtn" onclick="showHome()">&#8592; Volver</button>
@@ -114,13 +134,13 @@ body{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-i
   <div class="bookhead" id="bookhead"></div>
   <div id="bookbody"></div>
 </div>
-
+ 
 <div class="wrap hidden" id="view-settings">
   <div class="backrow">
     <button class="backbtn" onclick="showHome()">&#8592; Volver</button>
     <h1 style="font-size:18px; margin:0;">Ajustes</h1>
   </div>
-
+ 
   <div class="set-sec">
     <h3>Lecturas previas (antes de usar la app)</h3>
     <p>Cuántas veces habías leído cada testamento completo antes de empezar a llevar el registro acá. Si el número es aproximado, marcá la casilla y se mostrará con "~".</p>
@@ -140,13 +160,13 @@ body{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-i
     </div>
     <label class="chk"><input type="checkbox" id="prevNtApprox" onchange="setApprox('nt',this.checked)"> Es un número aproximado</label>
   </div>
-
+ 
   <div class="set-sec">
     <h3>Sincronización entre dispositivos</h3>
     <p id="syncDesc">Cargando…</p>
     <div id="syncBody"></div>
   </div>
-
+ 
   <div class="set-sec">
     <h3>Respaldo</h3>
     <p>Tus datos viven en este dispositivo. Exportá un respaldo de vez en cuando por si cambiás de iPad o de teléfono.</p>
@@ -156,7 +176,7 @@ body{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-i
     </div>
     <input type="file" id="importfile" accept=".json,application/json" class="hidden" onchange="importData(this)">
   </div>
-
+ 
   <div class="set-sec">
     <h3 style="color:var(--danger)">Zona delicada</h3>
     <p>Borra todos los datos de la app en este dispositivo. Si está sincronizado, también borra lo guardado en la nube. No se puede deshacer.</p>
@@ -164,9 +184,9 @@ body{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-i
   </div>
   <div class="foot">Mi lectura bíblica · versión 1 · Theos Place</div>
 </div>
-
+ 
 <div id="modalhost"></div>
-
+ 
 <script>
 /*CORE-START*/
 var BOOKS=[
@@ -185,7 +205,7 @@ var BOOKS=[
 ["1 Pedro",5,1],["2 Pedro",3,1],["1 Juan",5,1],["2 Juan",1,1],["3 Juan",1,1],
 ["Judas",1,1],["Apocalipsis",22,1]
 ];
-
+ 
 function newState(){
   return {
     v:1,
@@ -296,18 +316,18 @@ function mergeStates(a,b){
   return out;
 }
 /*CORE-END*/
-
+ 
 var KEY="miLecturaBiblica_v1";
 var CODEKEY="miLecturaBiblica_codigo";
 var ASKEDKEY="miLecturaBiblica_syncAsked";
 var SUPA_URL="https://yxtdygqnnnuepeoqqbve.supabase.co";
 var SUPA_KEY="sb_publishable_XR77YLARzEeHNMqXcWjczw_7hlPV_w5";
-
+ 
 var st=load();
 var curBook=-1;
 var syncCode=localStorage.getItem(CODEKEY)||null;
 var syncing=false, syncTimer=null, lastSyncedAt=null, lastSyncErr=null;
-
+ 
 function load(){
   try{
     var raw=localStorage.getItem(KEY);
@@ -319,7 +339,7 @@ function save(){
   try{localStorage.setItem(KEY,JSON.stringify(st));}catch(e){}
   scheduleSyncPush();
 }
-
+ 
 /* ---- Sincronización con Supabase ---- */
 function genCode(){
   var AL="ABCDEFGHJKMNPQRSTUVWXYZ23456789";
@@ -478,37 +498,37 @@ function syncCopyCode(){
 }
 function fmtTimes(n,approx){return (approx?"~":"")+n+"×";}
 function pct(x){return Math.round(x*100)+"%";}
-
+ 
 function renderHome(){
   var t=totals(st);
   var pending=passPending(st);
   var cards=[
-    {l:"Biblia",v:pct(passPct(st,null)),s:pending?"¡vuelta terminada!":"vuelta "+(t.bibleApprox?"~":"")+(t.bible+1)},
-    {l:"Antiguo T.",v:pct(passPct(st,0)),s:"vuelta "+(t.atApprox?"~":"")+(t.at+1)},
-    {l:"Nuevo T.",v:pct(passPct(st,1)),s:"vuelta "+(t.ntApprox?"~":"")+(t.nt+1)}
+    {l:"Biblia",v:pct(passPct(st,null)),s:pending?"¡vuelta terminada!":"vuelta "+(t.bibleApprox?"~":"")+(t.bible+1),c:"brand"},
+    {l:"Antiguo T.",v:pct(passPct(st,0)),s:"vuelta "+(t.atApprox?"~":"")+(t.at+1),c:"at"},
+    {l:"Nuevo T.",v:pct(passPct(st,1)),s:"vuelta "+(t.ntApprox?"~":"")+(t.nt+1),c:"nt"}
   ];
   var h="";
   cards.forEach(function(c){
-    h+='<div class="card"><div class="lbl">'+c.l+'</div><div class="val">'+c.v+'</div><div class="sub">'+c.s+'</div></div>';
+    h+='<div class="card '+c.c+'"><div class="lbl">'+c.l+'</div><div class="val">'+c.v+'</div><div class="sub">'+c.s+'</div></div>';
   });
   document.getElementById("statcards").innerHTML=h;
-
+ 
   var bh=document.getElementById("passbanner");
   if(pending){
     bh.classList.remove("hidden");
     bh.innerHTML='<div class="banner" style="justify-content:space-between;"><span>✓ ¡Terminaste esta vuelta de la Biblia!</span></div>'+
       '<button class="btn" style="background:var(--green); color:#fff; border-color:var(--green); font-weight:600;" onclick="askNewPass()">Empezar nueva vuelta</button>';
   } else { bh.classList.add("hidden"); bh.innerHTML=""; }
-
+ 
   var segBtns=document.querySelectorAll("#seg button");
   segBtns.forEach(function(b){b.className=(b.dataset.f===st.filter)?"on":"";});
-
+ 
   var groups=[];
   if(st.filter==="all"||st.filter==="at") groups.push({t:0,name:"Antiguo Testamento"});
   if(st.filter==="all"||st.filter==="nt") groups.push({t:1,name:"Nuevo Testamento"});
   var out="";
   groups.forEach(function(g){
-    out+='<div class="sect">'+g.name+'</div><div class="grid">';
+    out+='<div class="sect sect-'+(g.t===0?"at":"nt")+'">'+g.name+'</div><div class="grid">';
     for(var i=0;i<BOOKS.length;i++){
       if(BOOKS[i][2]!==g.t) continue;
       var b=st.books[i], cls="tile", sub;
@@ -525,6 +545,7 @@ function renderHome(){
         cls+=" prog";
         sub="cap. "+nextChapter(i)+" · "+pct(b.ch.length/BOOKS[i][1]);
       } else {
+        cls+=g.t===0?" pend-at":" pend-nt";
         sub=tot.n>0?fmtTimes(tot.n,tot.approx):"pendiente";
       }
       out+='<div class="'+cls+'" onclick="showBook('+i+')"><div class="bn">'+BOOKS[i][0]+'</div><div class="bs">'+sub+'</div></div>';
@@ -534,13 +555,13 @@ function renderHome(){
   document.getElementById("booklists").innerHTML=out;
   document.getElementById("footinfo").textContent="Registrando desde "+st.start;
 }
-
+ 
 function nextChapter(i){
   var b=st.books[i];
   for(var n=1;n<=BOOKS[i][1];n++){ if(b.ch.indexOf(n)<0) return n; }
   return BOOKS[i][1];
 }
-
+ 
 function renderBook(){
   var i=curBook, b=st.books[i], total=BOOKS[i][1];
   var done=bookDone(st,i);
@@ -553,25 +574,27 @@ function renderBook(){
     '<div class="pbar'+(pctVal>=1?' g':'')+'"><div style="width:'+Math.round(pctVal*100)+'%"></div></div>'+
     '<div class="reads">Leído '+fmtTimes(tot.n,tot.approx).replace("×"," veces").replace("~","~")+'</div>';
   document.getElementById("bookhead").innerHTML=head;
-
+ 
   var body="";
   if(done&&!b.rr){
     body+='<div class="banner">✓ Completado en esta vuelta</div>';
     body+='<button class="btn" onclick="askReread()">&#8635; Leer de nuevo</button>';
     body+='<button class="btn" onclick="askUndo()">Deshacer última lectura</button>';
   } else {
+    body+='<button class="btn" onclick="askMarkUntil('+total+')">Marcar todo el libro como leído</button>';
+    body+='<p style="font-size:12px; color:var(--muted); margin:-4px 0 10px;">Mantené presionado un capítulo para marcar de una vez todos los anteriores.</p>';
     body+='<div class="chgrid">';
     var nxt=nextChapter(i);
     for(var n=1;n<=total;n++){
       var read=b.ch.indexOf(n)>=0;
       var cls="ch"+(read?" read":"")+(!read&&n===nxt?" next":"");
-      body+='<div class="'+cls+'" onclick="tapChapter('+n+')">'+n+'</div>';
+      body+='<div class="'+cls+'" data-n="'+n+'">'+n+'</div>';
     }
     body+='</div>';
   }
   document.getElementById("bookbody").innerHTML=body;
 }
-
+ 
 function tapChapter(n){
   var i=curBook;
   var willComplete = st.books[i].ch.indexOf(n)<0 && st.books[i].ch.length===BOOKS[i][1]-1;
@@ -586,7 +609,60 @@ function tapChapter(n){
       ]);
   }
 }
-
+ 
+function markUntil(i,n){
+  var arr=[]; for(var k=1;k<=n;k++) arr.push(k);
+  st.books[i].ch=arr;
+}
+function askMarkUntil(n){
+  var i=curBook;
+  if(n===BOOKS[i][1]){
+    modal("¿Marcar "+BOOKS[i][0]+" completo como leído?",
+      "Se marcan los "+n+" capítulos y se suma una lectura completa de este libro.",
+      [
+        {t:"Sí, marcar todo",p:true,f:function(){ markUntil(i,n); doComplete(i); }},
+        {t:"Cancelar"}
+      ]);
+  } else {
+    modal("¿Marcar del 1 al "+n+"?",
+      "Se marcan como leídos los capítulos 1 a "+n+" de "+BOOKS[i][0]+".",
+      [
+        {t:"Sí, marcar",p:true,f:function(){ markUntil(i,n); save(); renderBook(); }},
+        {t:"Cancelar"}
+      ]);
+  }
+}
+ 
+/* Mantener presionado un capítulo = marcar desde el 1 hasta ese capítulo */
+var lpTimer=null, lpFired=false, lpStartX=0, lpStartY=0;
+var LP_MS=480, LP_TOL=10;
+function chTargetFromEvent(e){
+  var el = e.target && e.target.closest ? e.target.closest(".ch") : null;
+  return el ? parseInt(el.dataset.n,10) : null;
+}
+document.addEventListener("pointerdown",function(e){
+  var n=chTargetFromEvent(e); if(n===null) return;
+  lpFired=false; lpStartX=e.clientX; lpStartY=e.clientY;
+  clearTimeout(lpTimer);
+  lpTimer=setTimeout(function(){
+    lpFired=true;
+    if(navigator.vibrate) navigator.vibrate(15);
+    askMarkUntil(n);
+  },LP_MS);
+});
+document.addEventListener("pointermove",function(e){
+  if(lpTimer && (Math.abs(e.clientX-lpStartX)>LP_TOL || Math.abs(e.clientY-lpStartY)>LP_TOL)){
+    clearTimeout(lpTimer); lpTimer=null;
+  }
+});
+document.addEventListener("pointerup",function(e){
+  clearTimeout(lpTimer); lpTimer=null;
+  if(lpFired){ lpFired=false; return; }
+  var n=chTargetFromEvent(e); if(n===null) return;
+  tapChapter(n);
+});
+document.addEventListener("pointercancel",function(){ clearTimeout(lpTimer); lpTimer=null; lpFired=false; });
+ 
 function doComplete(i){
   var ev=completeBook(st,i);
   save(); renderBook();
@@ -604,7 +680,7 @@ function doComplete(i){
     modal("¡Terminaste el Nuevo Testamento!","Los 27 libros del NT están completos en esta vuelta.",[{t:"Amén",p:true}]);
   }
 }
-
+ 
 function askNewPass(){
   modal("¿Empezar una nueva vuelta?",
     "Se limpian las marcas de capítulos para arrancar de cero. Los conteos de veces leído no se pierden.",
@@ -613,7 +689,7 @@ function askNewPass(){
       {t:"Todavía no"}
     ]);
 }
-
+ 
 function askReread(){
   var i=curBook;
   modal("¿Leer "+BOOKS[i][0]+" de nuevo?",
@@ -632,7 +708,7 @@ function askUndo(){
       {t:"Cancelar"}
     ]);
 }
-
+ 
 function showHome(){
   document.getElementById("view-book").classList.add("hidden");
   document.getElementById("view-settings").classList.add("hidden");
@@ -654,13 +730,13 @@ function showSettings(){
   window.scrollTo(0,0);
 }
 function setFilter(f){st.filter=f; save(); renderHome();}
-
+ 
 function renderSettings(){
   document.getElementById("prevAtVal").textContent=st.previas.at.n;
   document.getElementById("prevNtVal").textContent=st.previas.nt.n;
   document.getElementById("prevAtApprox").checked=st.previas.at.approx;
   document.getElementById("prevNtApprox").checked=st.previas.nt.approx;
-
+ 
   var desc=document.getElementById("syncDesc");
   var body=document.getElementById("syncBody");
   if(!syncCode){
@@ -688,7 +764,7 @@ function stepPrev(w,d){
   save(); renderSettings();
 }
 function setApprox(w,v){st.previas[w].approx=v; save();}
-
+ 
 function exportData(){
   var blob=new Blob([JSON.stringify(st,null,2)],{type:"application/json"});
   var a=document.createElement("a");
@@ -728,7 +804,7 @@ function wipeAsk(){
       {t:"Cancelar"}
     ]);
 }
-
+ 
 function modal(title,text,buttons){
   var host=document.getElementById("modalhost");
   var h='<div class="overlay"><div class="modal"><h3>'+title+'</h3><p>'+text+'</p>';
@@ -745,7 +821,7 @@ function modal(title,text,buttons){
     };
   });
 }
-
+ 
 showHome();
 syncStartupCheck();
 </script>
