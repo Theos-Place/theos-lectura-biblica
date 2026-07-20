@@ -123,13 +123,14 @@ body{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-i
     <button data-f="at" onclick="setFilter('at')">Antiguo T.</button>
     <button data-f="nt" onclick="setFilter('nt')">Nuevo T.</button>
   </div>
+  <p style="font-size:12px; color:var(--muted); margin:0 0 10px;">Mantené presionado un libro para marcarlo completo.</p>
   <div id="booklists"></div>
   <div class="foot" id="footinfo"></div>
 </div>
 
 <div class="wrap hidden" id="view-book">
   <div class="backrow">
-    <button class="backbtn" onclick="showHome()">&#8592; Volver</button>
+    <button class="backbtn" onclick="history.back()">&#8592; Volver</button>
   </div>
   <div class="bookhead" id="bookhead"></div>
   <div id="bookbody"></div>
@@ -137,7 +138,7 @@ body{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-i
 
 <div class="wrap hidden" id="view-settings">
   <div class="backrow">
-    <button class="backbtn" onclick="showHome()">&#8592; Volver</button>
+    <button class="backbtn" onclick="history.back()">&#8592; Volver</button>
     <h1 style="font-size:18px; margin:0;">Ajustes</h1>
   </div>
 
@@ -213,7 +214,7 @@ function newState(){
     previas:{at:{n:0,approx:false},nt:{n:0,approx:false}},
     filter:"all",
     base:0,
-    books:BOOKS.map(function(){return {c:0,ch:[],rr:false};})
+    books:BOOKS.map(function(){return {c:0,ch:[],rr:false,oneShot:false};})
   };
 }
 function minCount(st,test){
@@ -258,10 +259,10 @@ function toggleChapter(st,i,n){
   b.ch.push(n);
   return b.ch.length===BOOKS[i][1];
 }
-function completeBook(st,i){
+function completeBook(st,i,oneShot){
   var oldB=biblePass(st),oldA=minCount(st,0),oldN=minCount(st,1);
   var b=st.books[i];
-  b.c++; b.rr=false;
+  b.c++; b.rr=false; b.oneShot=!!oneShot;
   b.ch=[]; for(var k=1;k<=BOOKS[i][1];k++) b.ch.push(k);
   return {
     bible:biblePass(st)>oldB,
@@ -269,11 +270,20 @@ function completeBook(st,i){
     nt:minCount(st,1)>oldN
   };
 }
+/* oneShot=true: la lectura se marcó de un solo golpe (mantener presionado), no capítulo
+   por capítulo. Al borrarla no dejamos nada marcado, porque no hubo lectura real que corregir.
+   oneShot=false: se completó tocando capítulo por capítulo; al borrar dejamos todo marcado
+   para que la persona destilde el capítulo puntual que no corresponde. */
 function undoComplete(st,i){
   var b=st.books[i];
   if(b.c>0) b.c--;
   b.rr=false;
-  b.ch=[]; for(var k=1;k<=BOOKS[i][1];k++) b.ch.push(k);
+  if(b.oneShot){
+    b.ch=[];
+  } else {
+    b.ch=[]; for(var k=1;k<=BOOKS[i][1];k++) b.ch.push(k);
+  }
+  b.oneShot=false;
 }
 function startReread(st,i){
   st.books[i].rr=true;
@@ -302,528 +312,7 @@ function mergeStates(a,b){
     var doneA=ba.c>(a.base||0), doneB=bb.c>(b.base||0);
     var rr = ba.rr||bb.rr;
     if(doneA||doneB){
-      out.books[i]={c:Math.max(ba.c,bb.c), ch: rr?[]:(function(){var l=[];for(var k=1;k<=BOOKS[i][1];k++)l.push(k);return l;})(), rr:rr};
-    } else {
-      var set={}; ba.ch.forEach(function(n){set[n]=1;}); bb.ch.forEach(function(n){set[n]=1;});
-      var union=Object.keys(set).map(Number).sort(function(x,y){return x-y;});
-      if(union.length===BOOKS[i][1]){
-        out.books[i]={c:Math.max(ba.c,bb.c)+1, ch:[], rr:false};
-      } else {
-        out.books[i]={c:Math.max(ba.c,bb.c), ch:union, rr:false};
-      }
-    }
-  }
-  return out;
-}
-/*CORE-END*/
-
-var KEY="miLecturaBiblica_v1";
-var CODEKEY="miLecturaBiblica_codigo";
-var ASKEDKEY="miLecturaBiblica_syncAsked";
-var SUPA_URL="https://yxtdygqnnnuepeoqqbve.supabase.co";
-var SUPA_KEY="sb_publishable_XR77YLARzEeHNMqXcWjczw_7hlPV_w5";
-
-var st=load();
-var curBook=-1;
-var syncCode=localStorage.getItem(CODEKEY)||null;
-var syncing=false, syncTimer=null, lastSyncedAt=null, lastSyncErr=null;
-
-function load(){
-  try{
-    var raw=localStorage.getItem(KEY);
-    if(raw){var d=JSON.parse(raw); if(validState(d)){d.base=d.base||0; return d;}}
-  }catch(e){}
-  return newState();
-}
-function save(){
-  try{localStorage.setItem(KEY,JSON.stringify(st));}catch(e){}
-  scheduleSyncPush();
-}
-
-/* ---- Sincronización con Supabase ---- */
-function genCode(){
-  var AL="ABCDEFGHJKMNPQRSTUVWXYZ23456789";
-  var rnd=new Uint8Array(16);
-  (window.crypto||window.msCrypto).getRandomValues(rnd);
-  var s=""; for(var i=0;i<16;i++) s+=AL[rnd[i]%AL.length];
-  return s.slice(0,4)+"-"+s.slice(4,8)+"-"+s.slice(8,12)+"-"+s.slice(12,16);
-}
-async function supaFetch(path,opts){
-  opts=opts||{};
-  opts.headers=Object.assign({
-    "apikey":SUPA_KEY,
-    "Authorization":"Bearer "+SUPA_KEY,
-    "Content-Type":"application/json"
-  },opts.headers||{});
-  return fetch(SUPA_URL+path,opts);
-}
-async function cloudPull(code){
-  var r=await supaFetch("/rest/v1/lectura_biblica?codigo=eq."+encodeURIComponent(code)+"&select=datos");
-  if(!r.ok) throw new Error("pull "+r.status);
-  var rows=await r.json();
-  return rows.length?rows[0].datos:null;
-}
-async function cloudPush(code,data){
-  var r=await supaFetch("/rest/v1/lectura_biblica?on_conflict=codigo",{
-    method:"POST",
-    headers:{"Prefer":"resolution=merge-duplicates,return=minimal"},
-    body:JSON.stringify([{codigo:code,datos:data,actualizado_en:new Date().toISOString()}])
-  });
-  if(!r.ok) throw new Error("push "+r.status);
-}
-function scheduleSyncPush(){
-  if(!syncCode) return;
-  clearTimeout(syncTimer);
-  syncTimer=setTimeout(doSyncPush,1500);
-}
-async function doSyncPush(){
-  if(!syncCode||syncing) return;
-  syncing=true; lastSyncErr=null;
-  try{ await cloudPush(syncCode,st); lastSyncedAt=new Date(); }
-  catch(e){ lastSyncErr=e.message; }
-  syncing=false;
-  if(!document.getElementById("view-settings").classList.contains("hidden")) renderSettings();
-}
-async function doSyncPull(){
-  if(!syncCode||syncing) return;
-  syncing=true; lastSyncErr=null;
-  try{
-    var remote=await cloudPull(syncCode);
-    if(remote){ st=mergeStates(st,remote); save(); }
-    lastSyncedAt=new Date();
-  }catch(e){ lastSyncErr=e.message; }
-  syncing=false;
-  refreshCurrentView();
-}
-function refreshCurrentView(){
-  if(!document.getElementById("view-home").classList.contains("hidden")) renderHome();
-  else if(!document.getElementById("view-book").classList.contains("hidden")) renderBook();
-  else if(!document.getElementById("view-settings").classList.contains("hidden")) renderSettings();
-}
-function syncStartupCheck(){
-  if(syncCode){
-    doSyncPull();
-    setInterval(function(){ if(document.visibilityState==="visible") doSyncPull(); },20000);
-    document.addEventListener("visibilitychange",function(){ if(document.visibilityState==="visible") doSyncPull(); });
-    window.addEventListener("focus",function(){ doSyncPull(); });
-    window.addEventListener("online",function(){ doSyncPull(); });
-  }
-  else if(!localStorage.getItem(ASKEDKEY)){ showSyncSetup(); }
-}
-function showSyncSetup(){
-  var host=document.getElementById("modalhost");
-  host.innerHTML='<div class="overlay"><div class="modal">'+
-    '<h3>Sincronizar entre dispositivos</h3>'+
-    '<p>Así podés ver el mismo progreso en el iPad, el iPhone y la Mac.</p>'+
-    '<button class="btn primary" data-a="new">Crear código nuevo (primer dispositivo)</button>'+
-    '<button class="btn" data-a="enter">Ya tengo un código</button>'+
-    '<button class="btn" data-a="skip">Usar solo este dispositivo por ahora</button>'+
-    '</div></div>';
-  host.querySelector('[data-a="new"]').onclick=syncCreateNew;
-  host.querySelector('[data-a="enter"]').onclick=syncShowEnter;
-  host.querySelector('[data-a="skip"]').onclick=function(){
-    localStorage.setItem(ASKEDKEY,"1"); host.innerHTML="";
-  };
-}
-function syncCreateNew(){
-  var code=genCode();
-  localStorage.setItem(CODEKEY,code);
-  localStorage.setItem(ASKEDKEY,"1");
-  syncCode=code;
-  cloudPush(code,st).then(function(){lastSyncedAt=new Date();}).catch(function(e){lastSyncErr=e.message;});
-  showSyncCodeReveal(code);
-}
-function showSyncCodeReveal(code){
-  var host=document.getElementById("modalhost");
-  host.innerHTML='<div class="overlay"><div class="modal">'+
-    '<h3>Este es tu código</h3>'+
-    '<p>Guardalo en Notas o donde guardés contraseñas. Lo vas a necesitar para vincular el iPhone o la Mac. Es la única forma de recuperar tus datos si perdés este dispositivo.</p>'+
-    '<div style="font-size:19px; font-weight:600; letter-spacing:1px; text-align:center; background:var(--card2); border-radius:10px; padding:14px; margin-bottom:14px;">'+code+'</div>'+
-    '<button class="btn primary" data-a="ok">Ya lo guardé</button>'+
-    '</div></div>';
-  host.querySelector('[data-a="ok"]').onclick=function(){host.innerHTML=""; if(!document.getElementById("view-settings").classList.contains("hidden")) renderSettings();};
-}
-function syncShowEnter(){
-  var host=document.getElementById("modalhost");
-  host.innerHTML='<div class="overlay"><div class="modal">'+
-    '<h3>Ingresá tu código</h3>'+
-    '<p>El código que te dio la app en el primer dispositivo.</p>'+
-    '<input id="codeInput" type="text" placeholder="XXXX-XXXX-XXXX-XXXX" autocapitalize="characters" '+
-    'style="width:100%; padding:10px; font-size:16px; border-radius:8px; border:1px solid var(--border); margin-bottom:12px; background:var(--card2); color:var(--text);">'+
-    '<button class="btn primary" data-a="link">Vincular</button>'+
-    '<button class="btn" data-a="back">Atrás</button>'+
-    '</div></div>';
-  host.querySelector('[data-a="link"]').onclick=syncLinkWithCode;
-  host.querySelector('[data-a="back"]').onclick=showSyncSetup;
-}
-async function syncLinkWithCode(){
-  var code=document.getElementById("codeInput").value.trim().toUpperCase();
-  if(!code) return;
-  localStorage.setItem(ASKEDKEY,"1");
-  var host=document.getElementById("modalhost");
-  host.innerHTML='<div class="overlay"><div class="modal"><h3>Conectando…</h3><p>Buscando tu progreso guardado.</p></div></div>';
-  try{
-    var remote=await cloudPull(code);
-    syncCode=code; localStorage.setItem(CODEKEY,code);
-    if(remote){ st=mergeStates(st,remote); save(); }
-    else { await cloudPush(code,st); }
-    lastSyncedAt=new Date();
-    host.innerHTML="";
-    showHome();
-  }catch(e){
-    host.innerHTML='<div class="overlay"><div class="modal"><h3>No se pudo conectar</h3>'+
-      '<p>Revisá tu internet e intentá de nuevo desde Ajustes.</p>'+
-      '<button class="btn primary" data-a="ok">Entendido</button></div></div>';
-    host.querySelector('[data-a="ok"]').onclick=function(){host.innerHTML="";};
-  }
-}
-function syncDisconnect(){
-  modal("¿Dejar de sincronizar este dispositivo?",
-    "Tus datos locales se quedan igual, pero este dispositivo deja de subir y bajar cambios hasta que ingresés un código de nuevo.",
-    [
-      {t:"Sí, desconectar",p:true,f:function(){
-        localStorage.removeItem(CODEKEY); syncCode=null; renderSettings();
-      }},
-      {t:"Cancelar"}
-    ]);
-}
-function syncCopyCode(){
-  if(!syncCode) return;
-  if(navigator.clipboard&&navigator.clipboard.writeText){
-    navigator.clipboard.writeText(syncCode).then(function(){
-      var el=document.getElementById("syncCopyBtn");
-      if(el){var old=el.textContent; el.textContent="Copiado ✓"; setTimeout(function(){el.textContent=old;},1500);}
-    });
-  }
-}
-function fmtTimes(n,approx){return (approx?"~":"")+n+"×";}
-function pct(x){return Math.round(x*100)+"%";}
-
-function renderHome(){
-  var t=totals(st);
-  var pending=passPending(st);
-  var cards=[
-    {l:"Biblia",v:pct(passPct(st,null)),s:pending?"¡vuelta terminada!":"vuelta "+(t.bibleApprox?"~":"")+(t.bible+1),c:"brand"},
-    {l:"Antiguo T.",v:pct(passPct(st,0)),s:"vuelta "+(t.atApprox?"~":"")+(t.at+1),c:"at"},
-    {l:"Nuevo T.",v:pct(passPct(st,1)),s:"vuelta "+(t.ntApprox?"~":"")+(t.nt+1),c:"nt"}
-  ];
-  var h="";
-  cards.forEach(function(c){
-    h+='<div class="card '+c.c+'"><div class="lbl">'+c.l+'</div><div class="val">'+c.v+'</div><div class="sub">'+c.s+'</div></div>';
-  });
-  document.getElementById("statcards").innerHTML=h;
-
-  var bh=document.getElementById("passbanner");
-  if(pending){
-    bh.classList.remove("hidden");
-    bh.innerHTML='<div class="banner" style="justify-content:space-between;"><span>✓ ¡Terminaste esta vuelta de la Biblia!</span></div>'+
-      '<button class="btn" style="background:var(--green); color:#fff; border-color:var(--green); font-weight:600;" onclick="askNewPass()">Empezar nueva vuelta</button>';
-  } else { bh.classList.add("hidden"); bh.innerHTML=""; }
-
-  var segBtns=document.querySelectorAll("#seg button");
-  segBtns.forEach(function(b){b.className=(b.dataset.f===st.filter)?"on":"";});
-
-  var groups=[];
-  if(st.filter==="all"||st.filter==="at") groups.push({t:0,name:"Antiguo Testamento"});
-  if(st.filter==="all"||st.filter==="nt") groups.push({t:1,name:"Nuevo Testamento"});
-  var out="";
-  groups.forEach(function(g){
-    out+='<div class="sect sect-'+(g.t===0?"at":"nt")+'">'+g.name+'</div><div class="grid">';
-    for(var i=0;i<BOOKS.length;i++){
-      if(BOOKS[i][2]!==g.t) continue;
-      var b=st.books[i], cls="tile", sub;
-      var tot=bookTotal(st,i);
-      if(bookDone(st,i)){
-        if(b.rr){
-          cls+=" reread";
-          sub="releyendo · cap. "+nextChapter(i);
-        } else {
-          cls+=" done";
-          sub=fmtTimes(tot.n,tot.approx)+" ✓";
-        }
-      } else if(b.ch.length>0){
-        cls+=" prog";
-        sub="cap. "+nextChapter(i)+" · "+pct(b.ch.length/BOOKS[i][1]);
-      } else {
-        cls+=g.t===0?" pend-at":" pend-nt";
-        sub=tot.n>0?fmtTimes(tot.n,tot.approx):"pendiente";
-      }
-      out+='<div class="'+cls+'" onclick="showBook('+i+')"><div class="bn">'+BOOKS[i][0]+'</div><div class="bs">'+sub+'</div></div>';
-    }
-    out+='</div>';
-  });
-  document.getElementById("booklists").innerHTML=out;
-  document.getElementById("footinfo").textContent="Registrando desde "+st.start;
-}
-
-function nextChapter(i){
-  var b=st.books[i];
-  for(var n=1;n<=BOOKS[i][1];n++){ if(b.ch.indexOf(n)<0) return n; }
-  return BOOKS[i][1];
-}
-
-function renderBook(){
-  var i=curBook, b=st.books[i], total=BOOKS[i][1];
-  var done=bookDone(st,i);
-  var readN=b.ch.length;
-  var tot=bookTotal(st,i);
-  var pctVal=done&&!b.rr?1:(readN/total);
-  var head='<div class="name">'+BOOKS[i][0]+'</div>'+
-    '<div style="margin:6px 0 2px;"><span class="big" style="'+(pctVal>=1?'color:var(--green-sub)':'')+'">'+pct(pctVal)+'</span>'+
-    '<span class="frac">'+(done&&!b.rr?total:readN)+' de '+total+' capítulos'+(b.rr?' (relectura)':'')+'</span></div>'+
-    '<div class="pbar'+(pctVal>=1?' g':'')+'"><div style="width:'+Math.round(pctVal*100)+'%"></div></div>'+
-    '<div class="reads">Leído '+fmtTimes(tot.n,tot.approx).replace("×"," veces").replace("~","~")+'</div>';
-  document.getElementById("bookhead").innerHTML=head;
-
-  var body="";
-  if(done&&!b.rr){
-    body+='<div class="banner">✓ Completado en esta vuelta</div>';
-    body+='<button class="btn" onclick="askReread()">&#8635; Leer de nuevo</button>';
-    body+='<button class="btn" onclick="askUndo()">Deshacer última lectura</button>';
-  } else {
-    body+='<button class="btn" onclick="askMarkUntil('+total+')">Marcar todo el libro como leído</button>';
-    body+='<p style="font-size:12px; color:var(--muted); margin:-4px 0 10px;">Mantené presionado un capítulo para marcar de una vez todos los anteriores.</p>';
-    body+='<div class="chgrid">';
-    var nxt=nextChapter(i);
-    for(var n=1;n<=total;n++){
-      var read=b.ch.indexOf(n)>=0;
-      var cls="ch"+(read?" read":"")+(!read&&n===nxt?" next":"");
-      body+='<div class="'+cls+'" data-n="'+n+'">'+n+'</div>';
-    }
-    body+='</div>';
-  }
-  document.getElementById("bookbody").innerHTML=body;
-}
-
-function tapChapter(n){
-  var i=curBook;
-  var willComplete = st.books[i].ch.indexOf(n)<0 && st.books[i].ch.length===BOOKS[i][1]-1;
-  toggleChapter(st,i,n);
-  save(); renderBook();
-  if(willComplete){
-    modal("¿Terminaste "+BOOKS[i][0]+"?",
-      "Se sumará una lectura completa de este libro.",
-      [
-        {t:"Sí, lo terminé",p:true,f:function(){doComplete(i);}},
-        {t:"Todavía no",f:function(){toggleChapter(st,i,n); save(); renderBook();}}
-      ]);
-  }
-}
-
-function markUntil(i,n){
-  var arr=[]; for(var k=1;k<=n;k++) arr.push(k);
-  st.books[i].ch=arr;
-}
-function askMarkUntil(n){
-  var i=curBook;
-  if(n===BOOKS[i][1]){
-    modal("¿Marcar "+BOOKS[i][0]+" completo como leído?",
-      "Se marcan los "+n+" capítulos y se suma una lectura completa de este libro.",
-      [
-        {t:"Sí, marcar todo",p:true,f:function(){ markUntil(i,n); doComplete(i); }},
-        {t:"Cancelar"}
-      ]);
-  } else {
-    modal("¿Marcar del 1 al "+n+"?",
-      "Se marcan como leídos los capítulos 1 a "+n+" de "+BOOKS[i][0]+".",
-      [
-        {t:"Sí, marcar",p:true,f:function(){ markUntil(i,n); save(); renderBook(); }},
-        {t:"Cancelar"}
-      ]);
-  }
-}
-
-/* Mantener presionado un capítulo = marcar desde el 1 hasta ese capítulo */
-var lpTimer=null, lpFired=false, lpStartX=0, lpStartY=0;
-var LP_MS=480, LP_TOL=10;
-function chTargetFromEvent(e){
-  var el = e.target && e.target.closest ? e.target.closest(".ch") : null;
-  return el ? parseInt(el.dataset.n,10) : null;
-}
-document.addEventListener("pointerdown",function(e){
-  var n=chTargetFromEvent(e); if(n===null) return;
-  lpFired=false; lpStartX=e.clientX; lpStartY=e.clientY;
-  clearTimeout(lpTimer);
-  lpTimer=setTimeout(function(){
-    lpFired=true;
-    if(navigator.vibrate) navigator.vibrate(15);
-    askMarkUntil(n);
-  },LP_MS);
-});
-document.addEventListener("pointermove",function(e){
-  if(lpTimer && (Math.abs(e.clientX-lpStartX)>LP_TOL || Math.abs(e.clientY-lpStartY)>LP_TOL)){
-    clearTimeout(lpTimer); lpTimer=null;
-  }
-});
-document.addEventListener("pointerup",function(e){
-  clearTimeout(lpTimer); lpTimer=null;
-  if(lpFired){ lpFired=false; return; }
-  var n=chTargetFromEvent(e); if(n===null) return;
-  tapChapter(n);
-});
-document.addEventListener("pointercancel",function(){ clearTimeout(lpTimer); lpTimer=null; lpFired=false; });
-
-function doComplete(i){
-  var ev=completeBook(st,i);
-  save(); renderBook();
-  if(ev.bible){
-    var t=totals(st);
-    modal("¡Terminaste la Biblia completa!",
-      "Acabás de completar la vuelta "+(t.bibleApprox?"~":"")+t.bible+". ¿Querés empezar la siguiente vuelta ahora? Se limpiarán las marcas de capítulos (los conteos no se pierden).",
-      [
-        {t:"Empezar nueva vuelta",p:true,f:function(){resetPass(st); save(); showHome();}},
-        {t:"Todavía no",f:function(){showHome();}}
-      ]);
-  } else if(ev.at){
-    modal("¡Terminaste el Antiguo Testamento!","Los 39 libros del AT están completos en esta vuelta.",[{t:"Amén",p:true}]);
-  } else if(ev.nt){
-    modal("¡Terminaste el Nuevo Testamento!","Los 27 libros del NT están completos en esta vuelta.",[{t:"Amén",p:true}]);
-  }
-}
-
-function askNewPass(){
-  modal("¿Empezar una nueva vuelta?",
-    "Se limpian las marcas de capítulos para arrancar de cero. Los conteos de veces leído no se pierden.",
-    [
-      {t:"Sí, empezar",p:true,f:function(){resetPass(st); save(); showHome();}},
-      {t:"Todavía no"}
-    ]);
-}
-
-function askReread(){
-  var i=curBook;
-  modal("¿Leer "+BOOKS[i][0]+" de nuevo?",
-    "El libro sigue contando como completado en esta vuelta. Empezás un marcado fresco y, al terminarlo, suma otra lectura.",
-    [
-      {t:"Sí, leer de nuevo",p:true,f:function(){startReread(st,i); save(); renderBook();}},
-      {t:"Cancelar"}
-    ]);
-}
-function askUndo(){
-  var i=curBook;
-  modal("¿Deshacer la última lectura?",
-    "Se resta una lectura de "+BOOKS[i][0]+" y los capítulos quedan marcados para que corrijás lo necesario.",
-    [
-      {t:"Sí, deshacer",p:true,f:function(){undoComplete(st,i); save(); renderBook(); }},
-      {t:"Cancelar"}
-    ]);
-}
-
-function showHome(){
-  document.getElementById("view-book").classList.add("hidden");
-  document.getElementById("view-settings").classList.add("hidden");
-  document.getElementById("view-home").classList.remove("hidden");
-  renderHome();
-  window.scrollTo(0,0);
-}
-function showBook(i){
-  curBook=i;
-  document.getElementById("view-home").classList.add("hidden");
-  document.getElementById("view-book").classList.remove("hidden");
-  renderBook();
-  window.scrollTo(0,0);
-}
-function showSettings(){
-  document.getElementById("view-home").classList.add("hidden");
-  document.getElementById("view-settings").classList.remove("hidden");
-  renderSettings();
-  window.scrollTo(0,0);
-}
-function setFilter(f){st.filter=f; save(); renderHome();}
-
-function renderSettings(){
-  document.getElementById("prevAtVal").textContent=st.previas.at.n;
-  document.getElementById("prevNtVal").textContent=st.previas.nt.n;
-  document.getElementById("prevAtApprox").checked=st.previas.at.approx;
-  document.getElementById("prevNtApprox").checked=st.previas.nt.approx;
-
-  var desc=document.getElementById("syncDesc");
-  var body=document.getElementById("syncBody");
-  if(!syncCode){
-    desc.textContent="Este dispositivo no está sincronizado. Solo vos ves este progreso, en este aparato.";
-    body.innerHTML='<button class="btn primary" id="syncStartBtn">Sincronizar este dispositivo</button>';
-    document.getElementById("syncStartBtn").onclick=showSyncSetup;
-  } else {
-    var estado = syncing?"Sincronizando…":(lastSyncErr?"Sin conexión — reintentará solo":(lastSyncedAt?"Sincronizado hace un momento":"Conectado"));
-    desc.textContent="Tu código conecta este dispositivo con los demás. "+estado+".";
-    body.innerHTML=
-      '<div style="font-size:16px; font-weight:600; letter-spacing:1px; text-align:center; background:var(--card2); border-radius:10px; padding:12px; margin-bottom:10px;">'+syncCode+'</div>'+
-      '<div class="btnrow" style="margin-bottom:8px;">'+
-        '<button class="btn" id="syncCopyBtn">Copiar código</button>'+
-        '<button class="btn" id="syncNowBtn">Sincronizar ahora</button>'+
-      '</div>'+
-      '<button class="btn danger" id="syncOffBtn">Dejar de sincronizar este dispositivo</button>';
-    document.getElementById("syncCopyBtn").onclick=syncCopyCode;
-    document.getElementById("syncNowBtn").onclick=function(){ doSyncPull(); };
-    document.getElementById("syncOffBtn").onclick=syncDisconnect;
-  }
-}
-function stepPrev(w,d){
-  var p=st.previas[w];
-  p.n=Math.max(0,p.n+d);
-  save(); renderSettings();
-}
-function setApprox(w,v){st.previas[w].approx=v; save();}
-
-function exportData(){
-  var blob=new Blob([JSON.stringify(st,null,2)],{type:"application/json"});
-  var a=document.createElement("a");
-  a.href=URL.createObjectURL(blob);
-  a.download="lectura-biblica-respaldo-"+(new Date()).toISOString().slice(0,10)+".json";
-  document.body.appendChild(a); a.click(); document.body.removeChild(a);
-}
-function importData(inp){
-  var f=inp.files[0]; if(!f) return;
-  var r=new FileReader();
-  r.onload=function(){
-    try{
-      var d=JSON.parse(r.result);
-      if(!validState(d)) throw new Error("formato");
-      modal("¿Restaurar este respaldo?","Reemplaza los datos actuales con los del archivo. No se puede deshacer.",
-        [
-          {t:"Sí, restaurar",p:true,f:function(){st=d; save(); showHome();}},
-          {t:"Cancelar"}
-        ]);
-    }catch(e){
-      modal("Archivo no válido","Ese archivo no parece un respaldo de esta app.",[{t:"Entendido",p:true}]);
-    }
-    inp.value="";
-  };
-  r.readAsText(f);
-}
-function wipeAsk(){
-  modal("¿Borrar todos los datos?","Se pierde todo el registro de este dispositivo. No se puede deshacer.",
-    [
-      {t:"Sí, borrar todo",p:true,f:function(){
-        modal("Última confirmación","¿De verdad querés borrar todo?",
-          [
-            {t:"Borrar definitivamente",p:true,f:function(){localStorage.removeItem(KEY); st=newState(); save(); showHome();}},
-            {t:"Cancelar"}
-          ]);
-      }},
-      {t:"Cancelar"}
-    ]);
-}
-
-function modal(title,text,buttons){
-  var host=document.getElementById("modalhost");
-  var h='<div class="overlay"><div class="modal"><h3>'+title+'</h3><p>'+text+'</p>';
-  buttons.forEach(function(b,ix){
-    h+='<button class="btn'+(b.p?' primary':'')+'" data-ix="'+ix+'">'+b.t+'</button>';
-  });
-  h+='</div></div>';
-  host.innerHTML=h;
-  host.querySelectorAll("button").forEach(function(el){
-    el.onclick=function(){
-      var b=buttons[parseInt(el.dataset.ix,10)];
-      host.innerHTML="";
-      if(b.f) b.f();
-    };
-  });
-}
-
-showHome();
-syncStartupCheck();
-</script>
-</body>
-</html>
+      var oneShot;
+      if(doneA&&doneB) oneShot = !!(ba.oneShot && bb.oneShot);
+      else if(doneA) oneShot = !!ba.oneShot;
+      else oneShot =
