@@ -703,6 +703,30 @@ document.addEventListener("pointerup",function(e){
 });
 document.addEventListener("pointercancel",function(){ clearTimeout(lpTimer); lpTimer=null; lpFired=false; });
 
+/* Deslizar desde el borde izquierdo = volver. Safari solo da este gesto dentro de su propia
+   barra; cuando la app corre agregada a la pantalla de inicio (standalone) ese gesto no existe,
+   así que lo simulamos a mano. Se ignora si el toque arranca sobre un capítulo o un libro
+   (para no chocar con mantener presionado), y solo se activa fuera del inicio. */
+var edgeSwipeActive=false, edgeStartX=0, edgeStartY=0;
+var EDGE_ZONE=16, EDGE_TRIGGER=70, EDGE_MAX_VERTICAL=60;
+document.addEventListener("pointerdown",function(e){
+  if(e.clientX>EDGE_ZONE) return;
+  if(lpTargetFromEvent(e)) return;
+  if(!document.getElementById("view-home").classList.contains("hidden")) return;
+  edgeSwipeActive=true; edgeStartX=e.clientX; edgeStartY=e.clientY;
+});
+document.addEventListener("pointermove",function(e){
+  if(!edgeSwipeActive) return;
+  var dx=e.clientX-edgeStartX, dy=Math.abs(e.clientY-edgeStartY);
+  if(dy>EDGE_MAX_VERTICAL){ edgeSwipeActive=false; return; }
+  if(dx>EDGE_TRIGGER){
+    edgeSwipeActive=false;
+    history.back();
+  }
+});
+document.addEventListener("pointerup",function(){ edgeSwipeActive=false; });
+document.addEventListener("pointercancel",function(){ edgeSwipeActive=false; });
+
 function doComplete(i,oneShot){
   var ev=completeBook(st,i,oneShot);
   save(); refreshCurrentView();
