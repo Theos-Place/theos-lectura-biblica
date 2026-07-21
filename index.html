@@ -172,7 +172,7 @@ body{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-i
     <h3>Respaldo</h3>
     <p>Tus datos viven en este dispositivo. Exportá un respaldo de vez en cuando por si cambiás de iPad o de teléfono.</p>
     <div class="btnrow">
-      <button class="btn" onclick="exportData()">&#8681; Exportar</button>
+      <button class="btn" onclick="exportData(this)">&#8681; Exportar</button>
       <button class="btn" onclick="document.getElementById('importfile').click()">&#8683; Restaurar</button>
     </div>
     <input type="file" id="importfile" accept=".json,application/json" class="hidden" onchange="importData(this)">
@@ -214,7 +214,7 @@ function newState(){
     previas:{at:{n:0,approx:false},nt:{n:0,approx:false}},
     filter:"all",
     base:0,
-    books:BOOKS.map(function(){return {c:0,ch:[],rr:false,oneShot:false};})
+    books:BOOKS.map(function(){return {c:0,ch:[],rr:false,oneShot:false,ts:0};})
   };
 }
 function minCount(st,test){
@@ -252,8 +252,12 @@ function bookTotal(st,i){
   var p=BOOKS[i][2]===0?st.previas.at:st.previas.nt;
   return {n:st.books[i].c+p.n,approx:p.approx&&p.n>0};
 }
+/* ts: fecha (en milisegundos) del último cambio hecho por la persona en ese libro.
+   Se usa al fusionar dos dispositivos: gana el cambio más reciente, incluso si es un borrado. */
+function touchBook(st,i){ st.books[i].ts=Date.now(); }
 function toggleChapter(st,i,n){
   var b=st.books[i];
+  touchBook(st,i);
   var ix=b.ch.indexOf(n);
   if(ix>=0){b.ch.splice(ix,1);return false;}
   b.ch.push(n);
@@ -262,7 +266,7 @@ function toggleChapter(st,i,n){
 function completeBook(st,i,oneShot){
   var oldB=biblePass(st),oldA=minCount(st,0),oldN=minCount(st,1);
   var b=st.books[i];
-  b.c++; b.rr=false; b.oneShot=!!oneShot;
+  b.c++; b.rr=false; b.oneShot=!!oneShot; touchBook(st,i);
   b.ch=[]; for(var k=1;k<=BOOKS[i][1];k++) b.ch.push(k);
   return {
     bible:biblePass(st)>oldB,
@@ -277,7 +281,7 @@ function completeBook(st,i,oneShot){
 function undoComplete(st,i){
   var b=st.books[i];
   if(b.c>0) b.c--;
-  b.rr=false;
+  b.rr=false; touchBook(st,i);
   if(b.oneShot){
     b.ch=[];
   } else {
@@ -288,10 +292,11 @@ function undoComplete(st,i){
 function startReread(st,i){
   st.books[i].rr=true;
   st.books[i].ch=[];
+  touchBook(st,i);
 }
 function resetPass(st){
   st.base=minCount(st,null);
-  for(var i=0;i<st.books.length;i++){st.books[i].ch=[];st.books[i].rr=false;}
+  for(var i=0;i<st.books.length;i++){st.books[i].ch=[];st.books[i].rr=false;touchBook(st,i);}
 }
 function validState(d){
   return d && d.v===1 && d.books && d.books.length===66 && d.previas && d.previas.at && d.previas.nt;
@@ -309,6 +314,15 @@ function mergeStates(a,b){
   });
   for(var i=0;i<BOOKS.length;i++){
     var ba=a.books[i], bb=b.books[i];
+    var ta=ba.ts||0, tb=bb.ts||0;
+    /* Regla principal: por libro gana el cambio más reciente (incluye borrados).
+       Si las fechas son iguales (o son datos viejos sin fecha), se usa la fusión
+       conservadora de abajo, que nunca pierde progreso. */
+    if(ta!==tb){
+      var w=(ta>tb)?ba:bb;
+      out.books[i]={c:w.c, ch:w.ch.slice(), rr:!!w.rr, oneShot:!!w.oneShot, ts:Math.max(ta,tb)};
+      continue;
+    }
     var doneA=ba.c>(a.base||0), doneB=bb.c>(b.base||0);
     var rr = ba.rr||bb.rr;
     if(doneA||doneB){
@@ -316,14 +330,14 @@ function mergeStates(a,b){
       if(doneA&&doneB) oneShot = !!(ba.oneShot && bb.oneShot);
       else if(doneA) oneShot = !!ba.oneShot;
       else oneShot = !!bb.oneShot;
-      out.books[i]={c:Math.max(ba.c,bb.c), ch: rr?[]:(function(){var l=[];for(var k=1;k<=BOOKS[i][1];k++)l.push(k);return l;})(), rr:rr, oneShot:oneShot};
+      out.books[i]={c:Math.max(ba.c,bb.c), ch: rr?[]:(function(){var l=[];for(var k=1;k<=BOOKS[i][1];k++)l.push(k);return l;})(), rr:rr, oneShot:oneShot, ts:ta};
     } else {
       var set={}; ba.ch.forEach(function(n){set[n]=1;}); bb.ch.forEach(function(n){set[n]=1;});
       var union=Object.keys(set).map(Number).sort(function(x,y){return x-y;});
       if(union.length===BOOKS[i][1]){
-        out.books[i]={c:Math.max(ba.c,bb.c)+1, ch:[], rr:false, oneShot:false};
+        out.books[i]={c:Math.max(ba.c,bb.c)+1, ch:[], rr:false, oneShot:false, ts:ta};
       } else {
-        out.books[i]={c:Math.max(ba.c,bb.c), ch:union, rr:false, oneShot:false};
+        out.books[i]={c:Math.max(ba.c,bb.c), ch:union, rr:false, oneShot:false, ts:ta};
       }
     }
   }
@@ -626,6 +640,7 @@ function tapChapter(n){
 function markUntil(i,n){
   var arr=[]; for(var k=1;k<=n;k++) arr.push(k);
   st.books[i].ch=arr;
+  touchBook(st,i);
 }
 function askMarkUntil(n){
   var i=curBook;
@@ -820,7 +835,19 @@ function renderSettings(){
       '</div>'+
       '<button class="btn danger" id="syncOffBtn">Dejar de sincronizar este dispositivo</button>';
     document.getElementById("syncCopyBtn").onclick=syncCopyCode;
-    document.getElementById("syncNowBtn").onclick=function(){ doSyncPull(); };
+    document.getElementById("syncNowBtn").onclick=async function(){
+      this.textContent="Sincronizando…"; this.disabled=true;
+      await doSyncPull();
+      /* doSyncPull vuelve a dibujar Ajustes, así que buscamos el botón nuevo */
+      var el=document.getElementById("syncNowBtn");
+      if(el){
+        el.textContent = lastSyncErr ? "Sin conexión" : "✓ Sincronizado";
+        setTimeout(function(){
+          var e2=document.getElementById("syncNowBtn");
+          if(e2) e2.textContent="Sincronizar ahora";
+        },2000);
+      }
+    };
     document.getElementById("syncOffBtn").onclick=syncDisconnect;
   }
 }
@@ -831,12 +858,17 @@ function stepPrev(w,d){
 }
 function setApprox(w,v){st.previas[w].approx=v; save();}
 
-function exportData(){
+function exportData(btn){
   var blob=new Blob([JSON.stringify(st,null,2)],{type:"application/json"});
   var a=document.createElement("a");
   a.href=URL.createObjectURL(blob);
   a.download="lectura-biblica-respaldo-"+(new Date()).toISOString().slice(0,10)+".json";
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  if(btn){
+    var old=btn.innerHTML;
+    btn.textContent="✓ Exportado";
+    setTimeout(function(){ btn.innerHTML=old; },2000);
+  }
 }
 function importData(inp){
   var f=inp.files[0]; if(!f) return;
