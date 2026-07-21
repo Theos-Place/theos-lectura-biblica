@@ -29,7 +29,9 @@
   }
 }
 *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
-html,body{margin:0; padding:0; background:var(--bg); color:var(--text);
+/* touch-action:pan-y — el navegador maneja el scroll vertical, pero los arrastres
+   horizontales se los deja a la app (sin esto, iOS se come el gesto de volver). */
+html,body{margin:0; padding:0; background:var(--bg); color:var(--text); touch-action:pan-y;
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-size:16px;}
 body{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);}
 .wrap{max-width:920px; margin:0 auto; padding:16px;}
@@ -347,7 +349,7 @@ function mergeStates(a,b){
 
 /* Subir este número en cada commit para poder ver en el pie de la app
    qué versión corre cada dispositivo. */
-var APP_VERSION="1.3 · 20 jul 2026";
+var APP_VERSION="1.4 · 20 jul 2026";
 
 var KEY="miLecturaBiblica_v1";
 var CODEKEY="miLecturaBiblica_codigo";
@@ -688,7 +690,7 @@ function askBookAction(i){
 
 /* Mantener presionado un capítulo = marcar desde el 1 hasta ese capítulo.
    Mantener presionado un libro en la pantalla principal = askBookAction. */
-var lpTimer=null, lpFired=false, lpStartX=0, lpStartY=0;
+var lpTimer=null, lpFired=false, lpMoved=false, lpStartX=0, lpStartY=0;
 var LP_MS=480, LP_TOL=10;
 function lpTargetFromEvent(e){
   var chEl = e.target && e.target.closest ? e.target.closest(".ch") : null;
@@ -699,7 +701,7 @@ function lpTargetFromEvent(e){
 }
 document.addEventListener("pointerdown",function(e){
   var t=lpTargetFromEvent(e); if(!t) return;
-  lpFired=false; lpStartX=e.clientX; lpStartY=e.clientY;
+  lpFired=false; lpMoved=false; lpStartX=e.clientX; lpStartY=e.clientY;
   clearTimeout(lpTimer);
   lpTimer=setTimeout(function(){
     lpFired=true;
@@ -709,25 +711,27 @@ document.addEventListener("pointerdown",function(e){
   },LP_MS);
 });
 document.addEventListener("pointermove",function(e){
-  if(lpTimer && (Math.abs(e.clientX-lpStartX)>LP_TOL || Math.abs(e.clientY-lpStartY)>LP_TOL)){
-    clearTimeout(lpTimer); lpTimer=null;
+  if((lpTimer||!lpMoved) && (Math.abs(e.clientX-lpStartX)>LP_TOL || Math.abs(e.clientY-lpStartY)>LP_TOL)){
+    clearTimeout(lpTimer); lpTimer=null; lpMoved=true;
   }
 });
 document.addEventListener("pointerup",function(e){
   clearTimeout(lpTimer); lpTimer=null;
   if(lpFired){ lpFired=false; return; }
+  /* si el dedo se arrastró, no es un toque: no marcar nada */
+  if(lpMoved){ lpMoved=false; return; }
   var t=lpTargetFromEvent(e); if(!t) return;
   if(t.type==="ch") tapChapter(t.n);
   else showBook(t.i);
 });
-document.addEventListener("pointercancel",function(){ clearTimeout(lpTimer); lpTimer=null; lpFired=false; });
+document.addEventListener("pointercancel",function(){ clearTimeout(lpTimer); lpTimer=null; lpFired=false; lpMoved=false; });
 
 /* Deslizar desde el borde izquierdo = volver. Safari solo da este gesto dentro de su propia
    barra; cuando la app corre agregada a la pantalla de inicio (standalone) ese gesto no existe,
    así que lo simulamos a mano. Se ignora si el toque arranca sobre un capítulo o un libro
    (para no chocar con mantener presionado), y solo se activa fuera del inicio. */
 var edgeSwipeActive=false, edgeStartX=0, edgeStartY=0;
-var EDGE_ZONE=16, EDGE_TRIGGER=70, EDGE_MAX_VERTICAL=60;
+var EDGE_ZONE=32, EDGE_TRIGGER=70, EDGE_MAX_VERTICAL=60;
 document.addEventListener("pointerdown",function(e){
   if(e.clientX>EDGE_ZONE) return;
   if(lpTargetFromEvent(e)) return;
