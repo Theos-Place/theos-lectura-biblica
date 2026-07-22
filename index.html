@@ -118,7 +118,10 @@ body{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-i
 <div class="wrap" id="view-home">
   <div class="topbar">
     <h1><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--brand)"><path d="M12 7c-2-2-5-2-8-1v13c3-1 6-1 8 1V7z"/><path d="M12 7c2-2 5-2 8-1v13c-3-1-6-1-8 1V7z"/></svg>Mi lectura bíblica</h1>
-    <button class="iconbtn" onclick="showSettings()" aria-label="Ajustes">&#9881;</button>
+    <div style="display:flex; gap:2px;">
+      <button class="iconbtn" style="font-weight:700;" onclick="showHelp()" aria-label="Ayuda">?</button>
+      <button class="iconbtn" onclick="showSettings()" aria-label="Ajustes">&#9881;</button>
+    </div>
   </div>
   <div class="cards" id="statcards"></div>
   <div id="passbanner" class="hidden"></div>
@@ -127,7 +130,6 @@ body{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-i
     <button data-f="at" onclick="setFilter('at')">Antiguo T.</button>
     <button data-f="nt" onclick="setFilter('nt')">Nuevo T.</button>
   </div>
-  <p style="font-size:12px; color:var(--muted); margin:0 0 10px;">Mantené presionado un libro para marcarlo completo o para corregirlo.</p>
   <div id="booklists"></div>
   <div class="foot" id="footinfo"></div>
 </div>
@@ -351,7 +353,7 @@ function mergeStates(a,b){
 
 /* Subir este número en cada commit para poder ver en el pie de la app
    qué versión corre cada dispositivo. */
-var APP_VERSION="1.6 · 21 jul 2026";
+var APP_VERSION="1.7 · 22 jul 2026";
 
 var KEY="miLecturaBiblica_v1";
 var CODEKEY="miLecturaBiblica_codigo";
@@ -472,12 +474,24 @@ function showWelcome(){
   host.innerHTML='<div class="overlay"><div class="modal">'+
     '<h3>¡Bienvenido!</h3>'+
     '<p>Tocá un libro para ver sus capítulos y andá marcando los que leás. '+
-    'Si usás la app en varios aparatos, podés sincronizarlos con un código desde Ajustes (el engranaje de arriba).</p>'+
+    'Tocá el <b>?</b> de arriba para ver el detalle de cómo se usa. '+
+    'Y si usás la app en varios aparatos, podés sincronizarlos con un código desde Ajustes (el engranaje).</p>'+
     '<button class="btn primary" data-a="go" data-esc="1">Empezar</button>'+
     '<button class="btn" data-a="enter">Ya tengo un código de otro aparato</button>'+
     '</div></div>';
   host.querySelector('[data-a="go"]').onclick=function(){ localStorage.setItem(ASKEDKEY,"1"); host.innerHTML=""; };
   host.querySelector('[data-a="enter"]').onclick=function(){ localStorage.setItem(ASKEDKEY,"1"); syncShowEnter(); };
+}
+/* Hoja de ayuda con los gestos y funciones básicas, accesible siempre desde el "?" */
+function showHelp(){
+  var t=
+    "<b>Tocá un libro</b> para ver sus capítulos.<br><br>"+
+    "<b>Tocá un capítulo</b> para marcarlo como leído; tocalo de nuevo para desmarcarlo.<br><br>"+
+    "<b>Mantené presionado un capítulo</b> para marcar de una vez todos los anteriores.<br><br>"+
+    "<b>Mantené presionado un libro</b> en la pantalla principal para marcarlo completo, o para corregirlo si ya está marcado.<br><br>"+
+    "<b>Deslizá desde el borde izquierdo</b> (o tocá «Volver») para regresar.<br><br>"+
+    "<b>¿Varios aparatos?</b> Sincronizalos con un código desde Ajustes ⚙. Ahí también podés anotar cuántas veces leíste cada testamento antes de usar la app.";
+  modal("Cómo se usa",t,[{t:"Entendido",p:true}]);
 }
 function showSyncSetup(){
   var host=document.getElementById("modalhost");
@@ -666,7 +680,6 @@ function renderBook(){
     body+='<button class="btn" onclick="askReread()">&#8635; Leer de nuevo</button>';
     body+='<button class="btn" onclick="askUndo()">Borrar esta lectura</button>';
   } else {
-    body+='<p style="font-size:12px; color:var(--muted); margin:0 0 10px;">Mantené presionado un capítulo para marcar de una vez todos los anteriores.</p>';
     body+='<div class="chgrid">';
     var nxt=nextChapter(i);
     for(var n=1;n<=total;n++){
