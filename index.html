@@ -38,8 +38,8 @@ html,body{margin:0; padding:0; background:var(--bg); color:var(--text); touch-ac
 body{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);}
 .wrap{max-width:920px; margin:0 auto; padding:16px;}
 .hidden{display:none !important;}
-.brandline{display:flex; align-items:center; justify-content:center; gap:5px; margin-bottom:8px;
-  font-size:11px; font-weight:500; letter-spacing:1.2px; text-transform:uppercase; color:var(--sec);}
+.brandline{display:flex; align-items:center; justify-content:center; gap:6px; margin-bottom:8px;
+  font-size:12px; font-weight:700; letter-spacing:1.2px; text-transform:uppercase; color:var(--text);}
 .brandline svg{flex:none;}
 .topbar{display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;}
 .topbar h1{font-size:20px; font-weight:600; margin:0; display:flex; align-items:center; gap:8px;}
@@ -120,7 +120,7 @@ body{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-i
 
 <div class="wrap" id="view-home">
   <div class="brandline">
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2"><circle cx="12" cy="12" r="9"/><line x1="2" y1="12" x2="22" y2="12"/></svg>
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4"><circle cx="12" cy="12" r="9"/><line x1="2" y1="12" x2="22" y2="12"/></svg>
     Theos Place
   </div>
   <div class="topbar">
@@ -147,6 +147,7 @@ body{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-i
   </div>
   <div class="bookhead" id="bookhead"></div>
   <div id="bookbody"></div>
+  <div class="foot" id="footbook">Mi lectura bíblica · Theos Place</div>
 </div>
 
 <div class="wrap hidden" id="view-settings">
@@ -360,7 +361,7 @@ function mergeStates(a,b){
 
 /* Subir este número en cada commit para poder ver en el pie de la app
    qué versión corre cada dispositivo. */
-var APP_VERSION="1.8 · 26 jul 2026";
+var APP_VERSION="1.9 · 26 jul 2026";
 
 var KEY="miLecturaBiblica_v1";
 var CODEKEY="miLecturaBiblica_codigo";
@@ -659,7 +660,7 @@ function renderHome(){
     out+='</div>';
   });
   document.getElementById("booklists").innerHTML=out;
-  document.getElementById("footinfo").textContent="Registrando desde "+st.start+" · versión "+APP_VERSION;
+  document.getElementById("footinfo").textContent="Registrando desde "+st.start+" · versión "+APP_VERSION+" · Theos Place";
 }
 
 function nextChapter(i){
@@ -1059,6 +1060,7 @@ document.addEventListener("keydown",function(e){
 });
 
 document.getElementById("footset").textContent="Mi lectura bíblica · versión "+APP_VERSION+" · Theos Place";
+document.getElementById("footbook").textContent="Mi lectura bíblica · versión "+APP_VERSION+" · Theos Place";
 showHome();
 syncStartupCheck();
 </script>
