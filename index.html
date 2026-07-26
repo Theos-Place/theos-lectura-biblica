@@ -38,6 +38,9 @@ html,body{margin:0; padding:0; background:var(--bg); color:var(--text); touch-ac
 body{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);}
 .wrap{max-width:920px; margin:0 auto; padding:16px;}
 .hidden{display:none !important;}
+.brandline{display:flex; align-items:center; justify-content:center; gap:5px; margin-bottom:8px;
+  font-size:11px; font-weight:500; letter-spacing:1.2px; text-transform:uppercase; color:var(--sec);}
+.brandline svg{flex:none;}
 .topbar{display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;}
 .topbar h1{font-size:20px; font-weight:600; margin:0; display:flex; align-items:center; gap:8px;}
 .topbar h1 svg{flex:none;}
@@ -116,6 +119,10 @@ body{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-i
 <body>
 
 <div class="wrap" id="view-home">
+  <div class="brandline">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2"><circle cx="12" cy="12" r="9"/><line x1="2" y1="12" x2="22" y2="12"/></svg>
+    Theos Place
+  </div>
   <div class="topbar">
     <h1><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--brand)"><path d="M12 7c-2-2-5-2-8-1v13c3-1 6-1 8 1V7z"/><path d="M12 7c2-2 5-2 8-1v13c-3-1-6-1-8 1V7z"/></svg>Mi lectura bíblica</h1>
     <div style="display:flex; gap:2px;">
@@ -353,7 +360,7 @@ function mergeStates(a,b){
 
 /* Subir este número en cada commit para poder ver en el pie de la app
    qué versión corre cada dispositivo. */
-var APP_VERSION="1.7 · 22 jul 2026";
+var APP_VERSION="1.8 · 26 jul 2026";
 
 var KEY="miLecturaBiblica_v1";
 var CODEKEY="miLecturaBiblica_codigo";
