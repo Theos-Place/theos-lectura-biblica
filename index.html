@@ -344,7 +344,14 @@ function mergeStates(a,b){
       if(doneA&&doneB) oneShot = !!(ba.oneShot && bb.oneShot);
       else if(doneA) oneShot = !!ba.oneShot;
       else oneShot = !!bb.oneShot;
-      out.books[i]={c:Math.max(ba.c,bb.c), ch: rr?[]:(function(){var l=[];for(var k=1;k<=BOOKS[i][1];k++)l.push(k);return l;})(), rr:rr, oneShot:oneShot, ts:ta};
+      /* Si está en plena relectura (rr), los capítulos ya marcados de este lado o del otro
+         NUNCA se descartan acá: se toma la unión, igual que con un libro sin terminar.
+         Antes esto ponía ch en blanco sin más, y con un empate de fecha borraba de golpe
+         los capítulos que la persona acababa de marcar durante la relectura. */
+      var chMerged = rr
+        ? (function(){var set={}; ba.ch.forEach(function(n){set[n]=1;}); bb.ch.forEach(function(n){set[n]=1;}); return Object.keys(set).map(Number).sort(function(x,y){return x-y;});})()
+        : (function(){var l=[];for(var k=1;k<=BOOKS[i][1];k++)l.push(k);return l;})();
+      out.books[i]={c:Math.max(ba.c,bb.c), ch: chMerged, rr:rr, oneShot:oneShot, ts:ta};
     } else {
       var set={}; ba.ch.forEach(function(n){set[n]=1;}); bb.ch.forEach(function(n){set[n]=1;});
       var union=Object.keys(set).map(Number).sort(function(x,y){return x-y;});
@@ -361,7 +368,7 @@ function mergeStates(a,b){
 
 /* Subir este número en cada commit para poder ver en el pie de la app
    qué versión corre cada dispositivo. */
-var APP_VERSION="1.9 · 26 jul 2026";
+var APP_VERSION="1.10 · 21 sep 2026";
 
 var KEY="miLecturaBiblica_v1";
 var CODEKEY="miLecturaBiblica_codigo";
