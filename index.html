@@ -2,12 +2,13 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Mi lectura">
-<meta name="theme-color" content="#f5f4ef">
+<meta name="theme-color" content="#f5f4ef" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1b1b1d" media="(prefers-color-scheme: dark)">
 <link rel="apple-touch-icon" href="icono-lectura-2.png">
 <link rel="icon" type="image/png" href="icono-lectura-2.png">
 <title>Mi lectura bíblica</title>
@@ -31,55 +32,54 @@
   }
 }
 *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
-/* touch-action:pan-y — el navegador maneja el scroll vertical, pero los arrastres
-   horizontales se los deja a la app (sin esto, iOS se come el gesto de volver). */
-html,body{margin:0; padding:0; background:var(--bg); color:var(--text); touch-action:pan-y;
+/* pan-y: el navegador maneja el scroll vertical y los arrastres horizontales quedan para la
+   app (sin esto, iOS se come el gesto de volver). pinch-zoom: se puede agrandar con dos dedos. */
+html,body{margin:0; padding:0; background:var(--bg); color:var(--text); touch-action:pan-y pinch-zoom;
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-size:16px;}
 body{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);}
 .wrap{max-width:920px; margin:0 auto; padding:16px;}
 .hidden{display:none !important;}
 .brandline{display:flex; align-items:center; justify-content:center; gap:6px; margin-bottom:8px;
   font-size:12px; font-weight:700; letter-spacing:1.2px; text-transform:uppercase; color:var(--text);}
-.brandline svg{flex:none;}
 .topbar{display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;}
 .topbar h1{font-size:20px; font-weight:600; margin:0; display:flex; align-items:center; gap:8px;}
-.topbar h1 svg{flex:none;}
+svg{flex:none;}
 .iconbtn{background:none; border:none; color:var(--brand); font-size:22px; padding:6px; cursor:pointer;}
 .backrow{display:flex; align-items:center; gap:8px; margin-bottom:10px;}
 .backbtn{background:none; border:none; color:var(--sec); font-size:16px; padding:6px 6px 6px 0; cursor:pointer;}
 .cards{display:flex; gap:8px; margin-bottom:14px;}
-.card{flex:1; background:var(--card); border-radius:12px; padding:10px 6px; text-align:center; border:0.5px solid var(--border);}
-.card .lbl{font-size:12px; color:var(--muted);}
+.card{flex:1; border-radius:12px; padding:10px 6px; text-align:center;}
+.card .lbl{font-size:12px;}
 .card .val{font-size:24px; font-weight:600; margin:2px 0;}
-.card .sub{font-size:11px; color:var(--muted);}
-.card.brand{background:var(--brand-bg); border-color:transparent;}
+.card .sub{font-size:11px;}
+.card.brand{background:var(--brand-bg);}
 .card.brand .lbl,.card.brand .sub{color:var(--brand-sub);}
 .card.brand .val{color:var(--brand-tx);}
-.card.at{background:var(--at-bg); border-color:transparent;}
+.card.at{background:var(--at-bg);}
 .card.at .lbl,.card.at .sub{color:var(--at-line);}
 .card.at .val{color:var(--at-tx);}
-.card.nt{background:var(--nt-bg); border-color:transparent;}
+.card.nt{background:var(--nt-bg);}
 .card.nt .lbl,.card.nt .sub{color:var(--nt-line);}
 .card.nt .val{color:var(--nt-tx);}
 .seg{display:flex; background:var(--card2); border-radius:10px; padding:3px; margin-bottom:14px;}
 .seg button{flex:1; border:none; background:none; padding:8px 4px; font-size:14px; color:var(--sec); border-radius:8px; cursor:pointer;}
 .seg button.on{background:var(--card); font-weight:600; color:var(--text); box-shadow:0 1px 2px rgba(0,0,0,0.08);}
-.sect{font-size:12px; color:var(--muted); margin:14px 2px 8px; text-transform:uppercase; letter-spacing:0.5px; font-weight:600;}
-.sect.sect-at{color:var(--at-tx);}
-.sect.sect-nt{color:var(--nt-tx);}
+.sect{font-size:12px; margin:14px 2px 8px; text-transform:uppercase; letter-spacing:0.5px; font-weight:600;}
+.sect-at{color:var(--at-tx);}
+.sect-nt{color:var(--nt-tx);}
 .grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:8px;}
-.tile{border-radius:10px; padding:10px; border:1.5px solid transparent; cursor:pointer; background:var(--card2);}
+/* tile y ch: sin selección de texto ni menú del sistema al mantener presionado */
+.tile,.ch{user-select:none; -webkit-user-select:none; -webkit-touch-callout:none; cursor:pointer; border:1.5px solid transparent; background:var(--card2);}
+.tile{border-radius:10px; padding:10px;}
 .tile .bn{font-size:14px; font-weight:600; color:var(--sec); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
 .tile .bs{font-size:12px; color:var(--muted); margin-top:2px;}
-.tile.done{background:var(--green-bg);}
-.tile.done .bn{color:var(--green-tx);}
+.tile.done,.tile.reread{background:var(--green-bg);}
+.tile.done .bn,.tile.reread .bn{color:var(--green-tx);}
 .tile.done .bs{color:var(--green-sub);}
-.tile.prog{background:var(--pur-bg); border-color:var(--pur);}
+.tile.prog{background:var(--pur-bg);}
+.tile.prog,.tile.reread{border-color:var(--pur);}
 .tile.prog .bn{color:var(--pur-tx);}
-.tile.prog .bs{color:var(--pur-sub);}
-.tile.reread{background:var(--green-bg); border-color:var(--pur);}
-.tile.reread .bn{color:var(--green-tx);}
-.tile.reread .bs{color:var(--pur-sub);}
+.tile.prog .bs,.tile.reread .bs{color:var(--pur-sub);}
 .tile.pend-at{border-left:3px solid var(--at-line);}
 .tile.pend-nt{border-left:3px solid var(--nt-line);}
 .bookhead .name{font-size:20px; font-weight:600;}
@@ -89,15 +89,18 @@ body{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-i
 .pbar div{height:100%; border-radius:3px; background:var(--pur);}
 .pbar.g div{background:var(--green);}
 .reads{font-size:13px; color:var(--sec); margin-bottom:12px;}
-.chgrid{display:grid; grid-template-columns:repeat(auto-fill,minmax(46px,1fr)); gap:6px;}
-.ch{border-radius:8px; padding:12px 0; text-align:center; font-size:15px; background:var(--card2); color:var(--sec); border:1.5px solid transparent; cursor:pointer; user-select:none;}
+.chgrid{display:grid; grid-template-columns:repeat(auto-fill,minmax(46px,1fr)); gap:6px; margin-bottom:14px;}
+.ch{border-radius:8px; padding:12px 0; text-align:center; font-size:15px; color:var(--sec);}
 .ch.read{background:var(--green-bg); color:var(--green-tx); font-weight:600;}
 .ch.next{border-color:var(--pur);}
-.banner{display:flex; align-items:center; gap:8px; background:var(--green-bg); color:var(--green-tx); border-radius:10px; padding:10px 12px; font-size:14px; margin-bottom:10px;}
+.banner{background:var(--green-bg); color:var(--green-tx); border-radius:10px; padding:10px 12px; font-size:14px; margin-bottom:10px;}
 .btn{display:block; width:100%; padding:12px; font-size:15px; border-radius:10px; border:1px solid var(--border); background:var(--card); color:var(--text); cursor:pointer; margin-bottom:8px;}
+.btn.primary{background:var(--green); color:#fff; border-color:var(--green); font-weight:600;}
 .btn.danger{color:var(--danger);}
 .btnrow{display:flex; gap:8px;}
 .btnrow .btn{flex:1;}
+.codebox{font-size:18px; font-weight:600; letter-spacing:1px; text-align:center; background:var(--card2); border-radius:10px; padding:12px; margin-bottom:12px;}
+.codein{width:100%; padding:10px; font-size:16px; border-radius:8px; border:1px solid var(--border); margin-bottom:12px; background:var(--card2); color:var(--text);}
 .set-sec{background:var(--card); border:0.5px solid var(--border); border-radius:12px; padding:14px; margin-bottom:12px;}
 .set-sec h3{font-size:15px; font-weight:600; margin:0 0 4px;}
 .set-sec p{font-size:13px; color:var(--muted); margin:0 0 10px; line-height:1.5;}
@@ -111,8 +114,6 @@ body{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-i
 .modal{background:var(--card); border-radius:14px; padding:20px; max-width:340px; width:100%;}
 .modal h3{margin:0 0 8px; font-size:17px;}
 .modal p{margin:0 0 16px; font-size:14px; color:var(--sec); line-height:1.5;}
-.modal .btn{margin-bottom:8px;}
-.modal .btn.primary{background:var(--green); color:#fff; border-color:var(--green); font-weight:600;}
 .foot{font-size:11px; color:var(--muted); text-align:center; margin-top:18px;}
 </style>
 </head>
@@ -131,7 +132,6 @@ body{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-i
     </div>
   </div>
   <div class="cards" id="statcards"></div>
-  <div id="passbanner" class="hidden"></div>
   <div class="seg" id="seg">
     <button data-f="all" onclick="setFilter('all')">Todos</button>
     <button data-f="at" onclick="setFilter('at')">Antiguo T.</button>
@@ -147,7 +147,7 @@ body{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-i
   </div>
   <div class="bookhead" id="bookhead"></div>
   <div id="bookbody"></div>
-  <div class="foot" id="footbook">Mi lectura bíblica · Theos Place</div>
+  <div class="foot" id="footbook"></div>
 </div>
 
 <div class="wrap hidden" id="view-settings">
@@ -184,7 +184,7 @@ body{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-i
 
   <div class="set-sec">
     <h3>Respaldo</h3>
-    <p id="bakDesc">Tus datos viven en este dispositivo. Exportá un respaldo de vez en cuando por si cambiás de iPad o de teléfono.</p>
+    <p id="bakDesc"></p>
     <div class="btnrow">
       <button class="btn" onclick="exportData(this)">&#8681; Exportar</button>
       <button class="btn" onclick="document.getElementById('importfile').click()">&#8683; Restaurar</button>
@@ -197,13 +197,25 @@ body{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-i
     <p>Borra el registro de este dispositivo y, si está sincronizado, también el respaldo en la nube, y desconecta la sincronización. Otros aparatos vinculados conservan su propia copia. No se puede deshacer.</p>
     <button class="btn danger" onclick="wipeAsk()">Borrar todos los datos</button>
   </div>
-  <div class="foot" id="footset">Mi lectura bíblica · Theos Place</div>
+  <div class="foot" id="footset"></div>
 </div>
 
 <div id="modalhost"></div>
 
 <script>
 /*CORE-START*/
+/* Lógica pura, sin pantalla: se prueba con Node (pruebas/test-core.js).
+
+   Cómo se cuenta (versión 2 de los datos):
+   - Cada libro lleva su propio conteo (c) de lecturas completas, independiente de los demás.
+   - ch = capítulos marcados de la lectura que va EN CURSO de ese libro. Al terminarla se suma
+     1 al conteo y la grilla queda limpia para la próxima.
+   - Las veces que se ha leído un testamento (o la Biblia) = el conteo más bajo entre sus libros.
+     Ej.: si todos los libros del NT tienen al menos 5, el NT va por 5 aunque Juan tenga 7.
+   - Un libro está "al día" (verde) si su conteo supera al de su testamento: ya cuenta para la
+     próxima vez de ese testamento.
+   - ts = fecha (en milisegundos) del último cambio de la persona. Al juntar los datos de dos
+     aparatos gana el cambio más reciente, incluso si es un borrado. */
 var BOOKS=[
 ["Génesis",50,0],["Éxodo",40,0],["Levítico",27,0],["Números",36,0],["Deuteronomio",34,0],
 ["Josué",24,0],["Jueces",21,0],["Rut",4,0],["1 Samuel",31,0],["2 Samuel",24,0],
@@ -221,855 +233,25 @@ var BOOKS=[
 ["Judas",1,1],["Apocalipsis",22,1]
 ];
 
+function today(){ return (new Date()).toISOString().slice(0,10); }
 function newState(){
   return {
-    v:1,
-    start:(new Date()).toISOString().slice(0,10),
-    previas:{at:{n:0,approx:false},nt:{n:0,approx:false}},
-    filter:"all",
-    base:0,
-    books:BOOKS.map(function(){return {c:0,ch:[],rr:false,oneShot:false,ts:0};})
+    v:2,
+    start:today(),
+    previas:{at:{n:0,approx:false},nt:{n:0,approx:false},ts:0},
+    books:BOOKS.map(function(){ return {c:0,ch:[],oneShot:false,ts:0}; })
   };
 }
+function allChapters(i){ var l=[]; for(var k=1;k<=BOOKS[i][1];k++) l.push(k); return l; }
+function unionCh(a,b){
+  var set={}; a.concat(b).forEach(function(n){ set[n]=1; });
+  return Object.keys(set).map(Number).sort(function(x,y){ return x-y; });
+}
+/* test: 0 = AT, 1 = NT, null = toda la Biblia */
 function minCount(st,test){
   var m=Infinity;
   for(var i=0;i<BOOKS.length;i++){
     if(test!==null && BOOKS[i][2]!==test) continue;
     if(st.books[i].c<m) m=st.books[i].c;
   }
-  return m===Infinity?0:m;
-}
-function biblePass(st){return minCount(st,null);}
-function bookDone(st,i){return st.books[i].c>(st.base||0);}
-function passPending(st){return minCount(st,null)>(st.base||0);}
-function chaptersThisPass(st,i){return bookDone(st,i)?BOOKS[i][1]:st.books[i].ch.length;}
-function passPct(st,test){
-  var read=0,tot=0;
-  for(var i=0;i<BOOKS.length;i++){
-    if(test!==null && BOOKS[i][2]!==test) continue;
-    read+=chaptersThisPass(st,i); tot+=BOOKS[i][1];
-  }
-  return tot?read/tot:0;
-}
-function totals(st){
-  var atT=minCount(st,0)+st.previas.at.n;
-  var ntT=minCount(st,1)+st.previas.nt.n;
-  var atA=st.previas.at.approx&&st.previas.at.n>0;
-  var ntA=st.previas.nt.approx&&st.previas.nt.n>0;
-  var bib,bibA;
-  if(atT<ntT){bib=atT;bibA=atA;}
-  else if(ntT<atT){bib=ntT;bibA=ntA;}
-  else {bib=atT;bibA=atA||ntA;}
-  return {at:atT,nt:ntT,bible:bib,atApprox:atA,ntApprox:ntA,bibleApprox:bibA};
-}
-function bookTotal(st,i){
-  var p=BOOKS[i][2]===0?st.previas.at:st.previas.nt;
-  return {n:st.books[i].c+p.n,approx:p.approx&&p.n>0};
-}
-/* ts: fecha (en milisegundos) del último cambio hecho por la persona en ese libro.
-   Se usa al fusionar dos dispositivos: gana el cambio más reciente, incluso si es un borrado. */
-function touchBook(st,i){ st.books[i].ts=Date.now(); }
-function toggleChapter(st,i,n){
-  var b=st.books[i];
-  touchBook(st,i);
-  var ix=b.ch.indexOf(n);
-  if(ix>=0){b.ch.splice(ix,1);return false;}
-  b.ch.push(n);
-  return b.ch.length===BOOKS[i][1];
-}
-function completeBook(st,i,oneShot){
-  var oldB=biblePass(st),oldA=minCount(st,0),oldN=minCount(st,1);
-  var b=st.books[i];
-  b.c++; b.rr=false; b.oneShot=!!oneShot; touchBook(st,i);
-  b.ch=[]; for(var k=1;k<=BOOKS[i][1];k++) b.ch.push(k);
-  return {
-    bible:biblePass(st)>oldB,
-    at:minCount(st,0)>oldA,
-    nt:minCount(st,1)>oldN
-  };
-}
-/* oneShot=true: la lectura se marcó de un solo golpe (mantener presionado), no capítulo
-   por capítulo. Al borrarla no dejamos nada marcado, porque no hubo lectura real que corregir.
-   oneShot=false: se completó tocando capítulo por capítulo; al borrar dejamos todo marcado
-   para que la persona destilde el capítulo puntual que no corresponde. */
-function undoComplete(st,i){
-  var b=st.books[i];
-  if(b.c>0) b.c--;
-  b.rr=false; touchBook(st,i);
-  if(b.oneShot){
-    b.ch=[];
-  } else {
-    b.ch=[]; for(var k=1;k<=BOOKS[i][1];k++) b.ch.push(k);
-  }
-  b.oneShot=false;
-}
-function startReread(st,i){
-  st.books[i].rr=true;
-  st.books[i].ch=[];
-  touchBook(st,i);
-}
-function resetPass(st){
-  st.base=minCount(st,null);
-  for(var i=0;i<st.books.length;i++){st.books[i].ch=[];st.books[i].rr=false;touchBook(st,i);}
-}
-function validState(d){
-  return d && d.v===1 && d.books && d.books.length===66 && d.previas && d.previas.at && d.previas.nt;
-}
-function mergeStates(a,b){
-  var out=newState();
-  out.start = (a.start<b.start)?a.start:b.start;
-  out.filter = a.filter || b.filter || "all";
-  out.base = Math.max(a.base||0, b.base||0);
-  ["at","nt"].forEach(function(w){
-    var pa=a.previas[w], pb=b.previas[w];
-    if(pa.n>pb.n) out.previas[w]={n:pa.n,approx:pa.approx};
-    else if(pb.n>pa.n) out.previas[w]={n:pb.n,approx:pb.approx};
-    else out.previas[w]={n:pa.n,approx:pa.approx||pb.approx};
-  });
-  for(var i=0;i<BOOKS.length;i++){
-    var ba=a.books[i], bb=b.books[i];
-    var ta=ba.ts||0, tb=bb.ts||0;
-    /* Regla principal: por libro gana el cambio más reciente (incluye borrados).
-       Si las fechas son iguales (o son datos viejos sin fecha), se usa la fusión
-       conservadora de abajo, que nunca pierde progreso. */
-    if(ta!==tb){
-      var w=(ta>tb)?ba:bb;
-      out.books[i]={c:w.c, ch:w.ch.slice(), rr:!!w.rr, oneShot:!!w.oneShot, ts:Math.max(ta,tb)};
-      continue;
-    }
-    var doneA=ba.c>(a.base||0), doneB=bb.c>(b.base||0);
-    var rr = ba.rr||bb.rr;
-    if(doneA||doneB){
-      var oneShot;
-      if(doneA&&doneB) oneShot = !!(ba.oneShot && bb.oneShot);
-      else if(doneA) oneShot = !!ba.oneShot;
-      else oneShot = !!bb.oneShot;
-      /* Si está en plena relectura (rr), los capítulos ya marcados de este lado o del otro
-         NUNCA se descartan acá: se toma la unión, igual que con un libro sin terminar.
-         Antes esto ponía ch en blanco sin más, y con un empate de fecha borraba de golpe
-         los capítulos que la persona acababa de marcar durante la relectura. */
-      var chMerged = rr
-        ? (function(){var set={}; ba.ch.forEach(function(n){set[n]=1;}); bb.ch.forEach(function(n){set[n]=1;}); return Object.keys(set).map(Number).sort(function(x,y){return x-y;});})()
-        : (function(){var l=[];for(var k=1;k<=BOOKS[i][1];k++)l.push(k);return l;})();
-      out.books[i]={c:Math.max(ba.c,bb.c), ch: chMerged, rr:rr, oneShot:oneShot, ts:ta};
-    } else {
-      var set={}; ba.ch.forEach(function(n){set[n]=1;}); bb.ch.forEach(function(n){set[n]=1;});
-      var union=Object.keys(set).map(Number).sort(function(x,y){return x-y;});
-      if(union.length===BOOKS[i][1]){
-        out.books[i]={c:Math.max(ba.c,bb.c)+1, ch:[], rr:false, oneShot:false, ts:ta};
-      } else {
-        out.books[i]={c:Math.max(ba.c,bb.c), ch:union, rr:false, oneShot:false, ts:ta};
-      }
-    }
-  }
-  return out;
-}
-/*CORE-END*/
-
-/* Subir este número en cada commit para poder ver en el pie de la app
-   qué versión corre cada dispositivo. */
-var APP_VERSION="1.10 · 21 sep 2026";
-
-var KEY="miLecturaBiblica_v1";
-var CODEKEY="miLecturaBiblica_codigo";
-var ASKEDKEY="miLecturaBiblica_syncAsked";
-var SUPA_URL="https://yxtdygqnnnuepeoqqbve.supabase.co";
-var SUPA_KEY="sb_publishable_XR77YLARzEeHNMqXcWjczw_7hlPV_w5";
-
-var st=load();
-var curBook=-1;
-var syncCode=localStorage.getItem(CODEKEY)||null;
-var syncing=false, syncTimer=null, lastSyncedAt=null, lastSyncErr=null;
-
-function load(){
-  try{
-    var raw=localStorage.getItem(KEY);
-    if(raw){var d=JSON.parse(raw); if(validState(d)){d.base=d.base||0; return d;}}
-  }catch(e){}
-  return newState();
-}
-function saveLocal(){
-  try{localStorage.setItem(KEY,JSON.stringify(st));}catch(e){}
-}
-function save(){
-  saveLocal();
-  scheduleSyncPush();
-}
-
-/* ---- Sincronización con Supabase ---- */
-function genCode(){
-  var AL="ABCDEFGHJKMNPQRSTUVWXYZ23456789";
-  var rnd=new Uint8Array(16);
-  (window.crypto||window.msCrypto).getRandomValues(rnd);
-  var s=""; for(var i=0;i<16;i++) s+=AL[rnd[i]%AL.length];
-  return s.slice(0,4)+"-"+s.slice(4,8)+"-"+s.slice(8,12)+"-"+s.slice(12,16);
-}
-async function supaFetch(path,opts){
-  opts=opts||{};
-  opts.headers=Object.assign({
-    "apikey":SUPA_KEY,
-    "Authorization":"Bearer "+SUPA_KEY,
-    "Content-Type":"application/json"
-  },opts.headers||{});
-  return fetch(SUPA_URL+path,opts);
-}
-async function cloudPull(code){
-  var r=await supaFetch("/rest/v1/lectura_biblica?codigo=eq."+encodeURIComponent(code)+"&select=datos");
-  if(!r.ok) throw new Error("pull "+r.status);
-  var rows=await r.json();
-  return rows.length?rows[0].datos:null;
-}
-async function cloudPush(code,data){
-  var r=await supaFetch("/rest/v1/lectura_biblica?on_conflict=codigo",{
-    method:"POST",
-    headers:{"Prefer":"resolution=merge-duplicates,return=minimal"},
-    body:JSON.stringify([{codigo:code,datos:data,actualizado_en:new Date().toISOString()}])
-  });
-  if(!r.ok) throw new Error("push "+r.status);
-}
-async function cloudDelete(code){
-  var r=await supaFetch("/rest/v1/lectura_biblica?codigo=eq."+encodeURIComponent(code),{method:"DELETE"});
-  if(!r.ok) throw new Error("delete "+r.status);
-}
-function scheduleSyncPush(){
-  if(!syncCode) return;
-  clearTimeout(syncTimer);
-  syncTimer=setTimeout(doSyncPush,1500);
-}
-async function doSyncPush(){
-  if(!syncCode) return;
-  /* si hay otra sincronización en vuelo, reintentamos en un momento en vez de descartar */
-  if(syncing){ scheduleSyncPush(); return; }
-  syncing=true; lastSyncErr=null;
-  try{ await cloudPush(syncCode,st); lastSyncedAt=new Date(); }
-  catch(e){ lastSyncErr=e.message; }
-  syncing=false;
-  if(!document.getElementById("view-settings").classList.contains("hidden")) renderSettings();
-}
-async function doSyncPull(){
-  if(!syncCode||syncing) return;
-  syncing=true; lastSyncErr=null;
-  var changed=false;
-  try{
-    var remote=await cloudPull(syncCode);
-    if(remote){
-      var merged=mergeStates(st,remote);
-      /* solo guardamos, subimos y redibujamos si de verdad hubo cambios */
-      if(JSON.stringify(merged)!==JSON.stringify(st)){ st=merged; save(); changed=true; }
-    }
-    lastSyncedAt=new Date();
-  }catch(e){ lastSyncErr=e.message; }
-  syncing=false;
-  if(changed) refreshCurrentView();
-  else if(!document.getElementById("view-settings").classList.contains("hidden")) renderSettings();
-}
-function refreshCurrentView(){
-  if(!document.getElementById("view-home").classList.contains("hidden")) renderHome();
-  else if(!document.getElementById("view-book").classList.contains("hidden")) renderBook();
-  else if(!document.getElementById("view-settings").classList.contains("hidden")) renderSettings();
-}
-var syncLoopOn=false;
-function startSyncLoop(){
-  if(syncLoopOn) return;
-  syncLoopOn=true;
-  setInterval(function(){ if(document.visibilityState==="visible") doSyncPull(); },20000);
-  document.addEventListener("visibilitychange",function(){ if(document.visibilityState==="visible") doSyncPull(); });
-  window.addEventListener("focus",function(){ doSyncPull(); });
-  window.addEventListener("online",function(){ doSyncPull(); });
-}
-function syncStartupCheck(){
-  if(syncCode){
-    doSyncPull();
-    startSyncLoop();
-  }
-  else if(!localStorage.getItem(ASKEDKEY)){ showWelcome(); }
-}
-function showWelcome(){
-  var host=document.getElementById("modalhost");
-  host.innerHTML='<div class="overlay"><div class="modal">'+
-    '<h3>¡Bienvenido!</h3>'+
-    '<p>Tocá un libro para ver sus capítulos y andá marcando los que leás. '+
-    'Tocá el <b>?</b> de arriba para ver el detalle de cómo se usa. '+
-    'Y si usás la app en varios aparatos, podés sincronizarlos con un código desde Ajustes (el engranaje).</p>'+
-    '<button class="btn primary" data-a="go" data-esc="1">Empezar</button>'+
-    '<button class="btn" data-a="enter">Ya tengo un código de otro aparato</button>'+
-    '</div></div>';
-  host.querySelector('[data-a="go"]').onclick=function(){ localStorage.setItem(ASKEDKEY,"1"); host.innerHTML=""; };
-  host.querySelector('[data-a="enter"]').onclick=function(){ localStorage.setItem(ASKEDKEY,"1"); syncShowEnter(); };
-}
-/* Hoja de ayuda con los gestos y funciones básicas, accesible siempre desde el "?" */
-function showHelp(){
-  var t=
-    "<b>Tocá un libro</b> para ver sus capítulos.<br><br>"+
-    "<b>Tocá un capítulo</b> para marcarlo como leído; tocalo de nuevo para desmarcarlo.<br><br>"+
-    "<b>Mantené presionado un capítulo</b> para marcar de una vez todos los anteriores.<br><br>"+
-    "<b>Mantené presionado un libro</b> en la pantalla principal para marcarlo completo, o para corregirlo si ya está marcado.<br><br>"+
-    "<b>Deslizá desde el borde izquierdo</b> (o tocá «Volver») para regresar.<br><br>"+
-    "<b>¿Varios aparatos?</b> Sincronizalos con un código desde Ajustes ⚙. Ahí también podés anotar cuántas veces leíste cada testamento antes de usar la app.";
-  modal("Cómo se usa",t,[{t:"Entendido",p:true}]);
-}
-function showSyncSetup(){
-  var host=document.getElementById("modalhost");
-  host.innerHTML='<div class="overlay"><div class="modal">'+
-    '<h3>Sincronizar entre dispositivos</h3>'+
-    '<p>Así podés ver el mismo progreso en el iPad, el iPhone y la Mac.</p>'+
-    '<button class="btn primary" data-a="new">Crear código nuevo (primer dispositivo)</button>'+
-    '<button class="btn" data-a="enter">Ya tengo un código</button>'+
-    '<button class="btn" data-a="skip" data-esc="1">Ahora no</button>'+
-    '</div></div>';
-  host.querySelector('[data-a="new"]').onclick=syncCreateNew;
-  host.querySelector('[data-a="enter"]').onclick=syncShowEnter;
-  host.querySelector('[data-a="skip"]').onclick=function(){
-    localStorage.setItem(ASKEDKEY,"1"); host.innerHTML="";
-  };
-}
-function syncCreateNew(){
-  var code=genCode();
-  localStorage.setItem(CODEKEY,code);
-  localStorage.setItem(ASKEDKEY,"1");
-  syncCode=code;
-  cloudPush(code,st).then(function(){lastSyncedAt=new Date();}).catch(function(e){lastSyncErr=e.message;});
-  startSyncLoop();
-  showSyncCodeReveal(code);
-}
-function showSyncCodeReveal(code){
-  var host=document.getElementById("modalhost");
-  host.innerHTML='<div class="overlay"><div class="modal">'+
-    '<h3>Este es tu código</h3>'+
-    '<p>Guardalo en Notas o donde guardés contraseñas. Lo vas a necesitar para vincular el iPhone o la Mac, y es la forma más fácil de recuperar tus datos si perdés este dispositivo.</p>'+
-    '<div style="font-size:19px; font-weight:600; letter-spacing:1px; text-align:center; background:var(--card2); border-radius:10px; padding:14px; margin-bottom:14px;">'+code+'</div>'+
-    '<button class="btn primary" data-a="ok" data-esc="1">Ya lo guardé</button>'+
-    '</div></div>';
-  host.querySelector('[data-a="ok"]').onclick=function(){host.innerHTML=""; if(!document.getElementById("view-settings").classList.contains("hidden")) renderSettings();};
-}
-function syncShowEnter(){
-  var host=document.getElementById("modalhost");
-  host.innerHTML='<div class="overlay"><div class="modal">'+
-    '<h3>Ingresá tu código</h3>'+
-    '<p>El código que te dio la app en el primer dispositivo.</p>'+
-    '<input id="codeInput" type="text" placeholder="XXXX-XXXX-XXXX-XXXX" autocapitalize="characters" '+
-    'style="width:100%; padding:10px; font-size:16px; border-radius:8px; border:1px solid var(--border); margin-bottom:12px; background:var(--card2); color:var(--text);">'+
-    '<button class="btn primary" data-a="link">Vincular</button>'+
-    '<button class="btn" data-a="back" data-esc="1">Atrás</button>'+
-    '</div></div>';
-  host.querySelector('[data-a="link"]').onclick=syncLinkWithCode;
-  host.querySelector('[data-a="back"]').onclick=showSyncSetup;
-}
-function showLinkError(title,msg){
-  modal(title,msg,[
-    {t:"Intentar de nuevo",p:true,f:syncShowEnter},
-    {t:"Cancelar"}
-  ]);
-}
-async function syncLinkWithCode(){
-  /* aceptamos el código con o sin guiones/espacios, pero debe tener 16 caracteres */
-  var raw=document.getElementById("codeInput").value.toUpperCase().replace(/[^A-Z0-9]/g,"");
-  if(raw.length!==16){
-    showLinkError("Código incompleto","El código tiene 16 letras y números (XXXX-XXXX-XXXX-XXXX). Revisalo e intentá de nuevo.");
-    return;
-  }
-  var code=raw.slice(0,4)+"-"+raw.slice(4,8)+"-"+raw.slice(8,12)+"-"+raw.slice(12,16);
-  localStorage.setItem(ASKEDKEY,"1");
-  var host=document.getElementById("modalhost");
-  host.innerHTML='<div class="overlay"><div class="modal"><h3>Conectando…</h3><p>Buscando tu progreso guardado.</p></div></div>';
-  try{
-    var remote=await cloudPull(code);
-    /* si el código no existe en la nube, NO lo adoptamos: casi seguro está mal escrito
-       y adoptarlo crearía un registro aparte que nunca se juntaría con el verdadero */
-    if(!remote){
-      showLinkError("Código no encontrado","No hay ningún progreso guardado con ese código. Revisá que esté bien escrito, o creá un código nuevo si este es tu primer dispositivo.");
-      return;
-    }
-    syncCode=code; localStorage.setItem(CODEKEY,code);
-    st=mergeStates(st,remote); save();
-    lastSyncedAt=new Date();
-    startSyncLoop();
-    host.innerHTML="";
-    showHome();
-  }catch(e){
-    showLinkError("No se pudo conectar","Revisá tu internet e intentá de nuevo.");
-  }
-}
-function syncDisconnect(){
-  modal("¿Dejar de sincronizar este dispositivo?",
-    "Tus datos locales se quedan igual, pero este dispositivo deja de subir y bajar cambios hasta que ingresés un código de nuevo.",
-    [
-      {t:"Sí, desconectar",p:true,f:function(){
-        localStorage.removeItem(CODEKEY); syncCode=null; renderSettings();
-      }},
-      {t:"Cancelar"}
-    ]);
-}
-function syncCopyCode(){
-  if(!syncCode) return;
-  if(navigator.clipboard&&navigator.clipboard.writeText){
-    navigator.clipboard.writeText(syncCode).then(function(){
-      var el=document.getElementById("syncCopyBtn");
-      if(el){var old=el.textContent; el.textContent="Copiado ✓"; setTimeout(function(){el.textContent=old;},1500);}
-    });
-  }
-}
-function fmtTimes(n,approx){return (approx?"~":"")+n+"×";}
-function pct(x){return Math.round(x*100)+"%";}
-
-function renderHome(){
-  var t=totals(st);
-  var pending=passPending(st);
-  var atDone=minCount(st,0)>(st.base||0), ntDone=minCount(st,1)>(st.base||0);
-  var cards=[
-    {l:"Biblia",v:pct(passPct(st,null)),s:pending?"¡terminada!":(t.bibleApprox?"~":"")+(t.bible+1)+".ª vez",c:"brand"},
-    {l:"Antiguo T.",v:pct(passPct(st,0)),s:atDone?"¡completado!":(t.atApprox?"~":"")+(t.at+1)+".ª vez",c:"at"},
-    {l:"Nuevo T.",v:pct(passPct(st,1)),s:ntDone?"¡completado!":(t.ntApprox?"~":"")+(t.nt+1)+".ª vez",c:"nt"}
-  ];
-  var h="";
-  cards.forEach(function(c){
-    h+='<div class="card '+c.c+'"><div class="lbl">'+c.l+'</div><div class="val">'+c.v+'</div><div class="sub">'+c.s+'</div></div>';
-  });
-  document.getElementById("statcards").innerHTML=h;
-
-  var bh=document.getElementById("passbanner");
-  if(pending){
-    bh.classList.remove("hidden");
-    bh.innerHTML='<div class="banner" style="justify-content:space-between;"><span>✓ ¡Terminaste la Biblia completa!</span></div>'+
-      '<button class="btn" style="background:var(--green); color:#fff; border-color:var(--green); font-weight:600;" onclick="askNewPass()">Empezar a leerla de nuevo</button>';
-  } else { bh.classList.add("hidden"); bh.innerHTML=""; }
-
-  var segBtns=document.querySelectorAll("#seg button");
-  segBtns.forEach(function(b){b.className=(b.dataset.f===st.filter)?"on":"";});
-
-  var groups=[];
-  if(st.filter==="all"||st.filter==="at") groups.push({t:0,name:"Antiguo Testamento"});
-  if(st.filter==="all"||st.filter==="nt") groups.push({t:1,name:"Nuevo Testamento"});
-  var out="";
-  groups.forEach(function(g){
-    out+='<div class="sect sect-'+(g.t===0?"at":"nt")+'">'+g.name+'</div><div class="grid">';
-    for(var i=0;i<BOOKS.length;i++){
-      if(BOOKS[i][2]!==g.t) continue;
-      var b=st.books[i], cls="tile", sub;
-      var tot=bookTotal(st,i);
-      if(bookDone(st,i)){
-        if(b.rr){
-          cls+=" reread";
-          sub="releyendo · cap. "+nextChapter(i);
-        } else {
-          cls+=" done";
-          sub=fmtTimes(tot.n,tot.approx)+" ✓";
-        }
-      } else if(b.ch.length>0){
-        cls+=" prog";
-        sub="cap. "+nextChapter(i)+" · "+pct(b.ch.length/BOOKS[i][1]);
-      } else {
-        cls+=g.t===0?" pend-at":" pend-nt";
-        sub=tot.n>0?fmtTimes(tot.n,tot.approx):"pendiente";
-      }
-      out+='<div class="'+cls+'" data-book-i="'+i+'"><div class="bn">'+BOOKS[i][0]+'</div><div class="bs">'+sub+'</div></div>';
-    }
-    out+='</div>';
-  });
-  document.getElementById("booklists").innerHTML=out;
-  document.getElementById("footinfo").textContent="Registrando desde "+st.start+" · versión "+APP_VERSION+" · Theos Place";
-}
-
-function nextChapter(i){
-  var b=st.books[i];
-  for(var n=1;n<=BOOKS[i][1];n++){ if(b.ch.indexOf(n)<0) return n; }
-  return BOOKS[i][1];
-}
-
-function renderBook(){
-  var i=curBook, b=st.books[i], total=BOOKS[i][1];
-  var done=bookDone(st,i);
-  var readN=b.ch.length;
-  var tot=bookTotal(st,i);
-  var pctVal=done&&!b.rr?1:(readN/total);
-  var head='<div class="name">'+BOOKS[i][0]+'</div>'+
-    '<div style="margin:6px 0 2px;"><span class="big" style="'+(pctVal>=1?'color:var(--green-sub)':'')+'">'+pct(pctVal)+'</span>'+
-    '<span class="frac">'+(done&&!b.rr?total:readN)+' de '+total+' capítulos'+(b.rr?' (relectura)':'')+'</span></div>'+
-    '<div class="pbar'+(pctVal>=1?' g':'')+'"><div style="width:'+Math.round(pctVal*100)+'%"></div></div>'+
-    '<div class="reads">'+(tot.n===0?"Aún sin lectura completa":"Leído "+(tot.approx?"~":"")+(tot.n===1?"1 vez":tot.n+" veces"))+'</div>';
-  document.getElementById("bookhead").innerHTML=head;
-
-  var body="";
-  if(done&&!b.rr){
-    body+='<div class="banner">✓ Completado en esta lectura</div>';
-    body+='<button class="btn" onclick="askReread()">&#8635; Leer de nuevo</button>';
-    body+='<button class="btn" onclick="askUndo()">Borrar esta lectura</button>';
-  } else {
-    body+='<div class="chgrid">';
-    var nxt=nextChapter(i);
-    for(var n=1;n<=total;n++){
-      var read=b.ch.indexOf(n)>=0;
-      var cls="ch"+(read?" read":"")+(!read&&n===nxt?" next":"");
-      body+='<div class="'+cls+'" data-n="'+n+'">'+n+'</div>';
-    }
-    body+='</div>';
-  }
-  document.getElementById("bookbody").innerHTML=body;
-}
-
-function tapChapter(n){
-  var i=curBook;
-  var willComplete = st.books[i].ch.indexOf(n)<0 && st.books[i].ch.length===BOOKS[i][1]-1;
-  toggleChapter(st,i,n);
-  save(); renderBook();
-  if(willComplete){
-    modal("¿Terminaste "+BOOKS[i][0]+"?",
-      "Se sumará una lectura completa de este libro.",
-      [
-        {t:"Sí, lo terminé",p:true,f:function(){doComplete(i);}},
-        {t:"Todavía no",f:function(){toggleChapter(st,i,n); save(); renderBook();}}
-      ]);
-  }
-}
-
-/* Marca del 1 al n SIN desmarcar capítulos posteriores que ya estaban marcados. */
-function markUntil(i,n){
-  var set={};
-  st.books[i].ch.forEach(function(k){set[k]=1;});
-  for(var k=1;k<=n;k++) set[k]=1;
-  st.books[i].ch=Object.keys(set).map(Number).sort(function(a,b){return a-b;});
-  touchBook(st,i);
-}
-function askMarkUntil(n){
-  var i=curBook;
-  if(n===BOOKS[i][1]){
-    modal("¿Marcar "+BOOKS[i][0]+" completo como leído?",
-      "Se marcan los "+n+" capítulos y se suma una lectura completa de este libro.",
-      [
-        {t:"Sí, marcar todo",p:true,f:function(){ markUntil(i,n); doComplete(i,true); }},
-        {t:"Cancelar"}
-      ]);
-  } else {
-    modal("¿Marcar del 1 al "+n+"?",
-      "Se marcan como leídos los capítulos 1 a "+n+" de "+BOOKS[i][0]+".",
-      [
-        {t:"Sí, marcar",p:true,f:function(){
-          markUntil(i,n);
-          /* si con esto quedaron todos los capítulos marcados, cuenta como lectura completa */
-          if(st.books[i].ch.length===BOOKS[i][1]) doComplete(i,true);
-          else { save(); renderBook(); }
-        }},
-        {t:"Cancelar"}
-      ]);
-  }
-}
-
-/* Mantener presionado un libro (pantalla principal) = marcarlo completo, o si ya está
-   completado, preguntar qué hacer (otra lectura / borrar esta lectura). */
-function askBookAction(i){
-  if(bookDone(st,i)){
-    modal("¿Qué querés hacer con "+BOOKS[i][0]+"?",
-      "Ya está marcado como completado en esta lectura.",
-      [
-        {t:"Marcar otra lectura completa",p:true,f:function(){ doComplete(i,true); }},
-        {t:"Borrar esta lectura",f:function(){ askUndoBook(i); }},
-        {t:"Cancelar"}
-      ]);
-  } else {
-    modal("¿Marcar "+BOOKS[i][0]+" completo como leído?",
-      "Se marcan los "+BOOKS[i][1]+" capítulos y se suma una lectura completa de este libro.",
-      [
-        {t:"Sí, marcar todo",p:true,f:function(){ doComplete(i,true); }},
-        {t:"Cancelar"}
-      ]);
-  }
-}
-
-/* Mantener presionado un capítulo = marcar desde el 1 hasta ese capítulo.
-   Mantener presionado un libro en la pantalla principal = askBookAction. */
-var lpTimer=null, lpFired=false, lpMoved=false, lpStartX=0, lpStartY=0;
-var LP_MS=480, LP_TOL=10;
-function lpTargetFromEvent(e){
-  var chEl = e.target && e.target.closest ? e.target.closest(".ch") : null;
-  if(chEl) return {type:"ch", n:parseInt(chEl.dataset.n,10)};
-  var tileEl = e.target && e.target.closest ? e.target.closest(".tile[data-book-i]") : null;
-  if(tileEl) return {type:"book", i:parseInt(tileEl.dataset.bookI,10)};
-  return null;
-}
-document.addEventListener("pointerdown",function(e){
-  var t=lpTargetFromEvent(e); if(!t) return;
-  lpFired=false; lpMoved=false; lpStartX=e.clientX; lpStartY=e.clientY;
-  clearTimeout(lpTimer);
-  lpTimer=setTimeout(function(){
-    lpFired=true;
-    if(navigator.vibrate) navigator.vibrate(15);
-    if(t.type==="ch") askMarkUntil(t.n);
-    else askBookAction(t.i);
-  },LP_MS);
-});
-document.addEventListener("pointermove",function(e){
-  if((lpTimer||!lpMoved) && (Math.abs(e.clientX-lpStartX)>LP_TOL || Math.abs(e.clientY-lpStartY)>LP_TOL)){
-    clearTimeout(lpTimer); lpTimer=null; lpMoved=true;
-  }
-});
-document.addEventListener("pointerup",function(e){
-  clearTimeout(lpTimer); lpTimer=null;
-  if(lpFired){ lpFired=false; return; }
-  /* si el dedo se arrastró, no es un toque: no marcar nada */
-  if(lpMoved){ lpMoved=false; return; }
-  var t=lpTargetFromEvent(e); if(!t) return;
-  if(t.type==="ch") tapChapter(t.n);
-  else showBook(t.i);
-});
-document.addEventListener("pointercancel",function(){ clearTimeout(lpTimer); lpTimer=null; lpFired=false; lpMoved=false; });
-
-/* Deslizar desde el borde izquierdo = volver. Safari solo da este gesto dentro de su propia
-   barra; cuando la app corre agregada a la pantalla de inicio (standalone) ese gesto no existe,
-   así que lo simulamos a mano. Se ignora si el toque arranca sobre un capítulo o un libro
-   (para no chocar con mantener presionado), y solo se activa fuera del inicio. */
-var edgeSwipeActive=false, edgeStartX=0, edgeStartY=0;
-var EDGE_ZONE=32, EDGE_TRIGGER=70, EDGE_MAX_VERTICAL=60;
-document.addEventListener("pointerdown",function(e){
-  if(e.clientX>EDGE_ZONE) return;
-  if(lpTargetFromEvent(e)) return;
-  if(!document.getElementById("view-home").classList.contains("hidden")) return;
-  edgeSwipeActive=true; edgeStartX=e.clientX; edgeStartY=e.clientY;
-});
-document.addEventListener("pointermove",function(e){
-  if(!edgeSwipeActive) return;
-  var dx=e.clientX-edgeStartX, dy=Math.abs(e.clientY-edgeStartY);
-  if(dy>EDGE_MAX_VERTICAL){ edgeSwipeActive=false; return; }
-  if(dx>EDGE_TRIGGER){
-    edgeSwipeActive=false;
-    history.back();
-  }
-});
-document.addEventListener("pointerup",function(){ edgeSwipeActive=false; });
-document.addEventListener("pointercancel",function(){ edgeSwipeActive=false; });
-
-function doComplete(i,oneShot){
-  var ev=completeBook(st,i,oneShot);
-  save(); refreshCurrentView();
-  if(ev.bible){
-    var t=totals(st);
-    modal("¡Terminaste la Biblia completa!",
-      "Acabás de leerla completa por "+(t.bibleApprox?"~":"")+t.bible+".ª vez. ¿Querés empezar a leerla de nuevo ahora? Se limpiarán las marcas de capítulos (los conteos no se pierden).",
-      [
-        {t:"Empezar de nuevo",p:true,f:function(){resetPass(st); save(); showHome();}},
-        {t:"Todavía no",f:function(){showHome();}}
-      ]);
-  } else if(ev.at){
-    modal("¡Terminaste el Antiguo Testamento!","Los 39 libros del AT están completos en esta lectura.",[{t:"Amén",p:true}]);
-  } else if(ev.nt){
-    modal("¡Terminaste el Nuevo Testamento!","Los 27 libros del NT están completos en esta lectura.",[{t:"Amén",p:true}]);
-  }
-}
-
-function askNewPass(){
-  modal("¿Empezar a leer la Biblia de nuevo?",
-    "Se limpian las marcas de capítulos para arrancar de cero. Los conteos de veces leído no se pierden.",
-    [
-      {t:"Sí, empezar",p:true,f:function(){resetPass(st); save(); showHome();}},
-      {t:"Todavía no"}
-    ]);
-}
-
-function askReread(){
-  var i=curBook;
-  modal("¿Leer "+BOOKS[i][0]+" de nuevo?",
-    "El libro sigue contando como completado en esta lectura de la Biblia. Empezás un marcado fresco y, al terminarlo, suma otra lectura del libro.",
-    [
-      {t:"Sí, leer de nuevo",p:true,f:function(){startReread(st,i); save(); renderBook();}},
-      {t:"Cancelar"}
-    ]);
-}
-/* La explicación depende de cómo se completó: si fue de un solo golpe, al borrar no queda
-   nada marcado; si fue capítulo por capítulo, quedan marcados para corregir el puntual. */
-function askUndoBook(i){
-  var desc = st.books[i].oneShot
-    ? "Se resta una lectura de "+BOOKS[i][0]+" y el libro queda sin capítulos marcados."
-    : "Se resta una lectura de "+BOOKS[i][0]+" y los capítulos quedan marcados para que corrijás el que haga falta.";
-  modal("¿Borrar esta lectura?",desc,
-    [
-      {t:"Sí, borrar",p:true,f:function(){undoComplete(st,i); save(); refreshCurrentView(); }},
-      {t:"Cancelar"}
-    ]);
-}
-function askUndo(){ askUndoBook(curBook); }
-
-function showHome(){
-  document.getElementById("view-book").classList.add("hidden");
-  document.getElementById("view-settings").classList.add("hidden");
-  document.getElementById("view-home").classList.remove("hidden");
-  renderHome();
-  window.scrollTo(0,0);
-}
-function showBook(i){
-  curBook=i;
-  history.pushState({v:"book"},"");
-  document.getElementById("view-home").classList.add("hidden");
-  document.getElementById("view-book").classList.remove("hidden");
-  renderBook();
-  window.scrollTo(0,0);
-}
-function showSettings(){
-  history.pushState({v:"settings"},"");
-  document.getElementById("view-home").classList.add("hidden");
-  document.getElementById("view-settings").classList.remove("hidden");
-  renderSettings();
-  window.scrollTo(0,0);
-}
-/* el filtro es preferencia de esta pantalla: se guarda local pero no dispara subida a la nube */
-function setFilter(f){st.filter=f; saveLocal(); renderHome();}
-
-function renderSettings(){
-  document.getElementById("prevAtVal").textContent=st.previas.at.n;
-  document.getElementById("prevNtVal").textContent=st.previas.nt.n;
-  document.getElementById("prevAtApprox").checked=st.previas.at.approx;
-  document.getElementById("prevNtApprox").checked=st.previas.nt.approx;
-
-  var desc=document.getElementById("syncDesc");
-  var body=document.getElementById("syncBody");
-  document.getElementById("bakDesc").textContent = syncCode
-    ? "Tus datos también están en la nube por la sincronización, pero un respaldo exportado nunca está de más."
-    : "Tus datos viven en este dispositivo. Exportá un respaldo de vez en cuando por si cambiás de iPad o de teléfono.";
-  if(!syncCode){
-    desc.textContent="Este dispositivo no está sincronizado. Solo vos ves este progreso, en este aparato.";
-    body.innerHTML='<button class="btn primary" id="syncStartBtn">Sincronizar este dispositivo</button>';
-    document.getElementById("syncStartBtn").onclick=showSyncSetup;
-  } else {
-    var estado = syncing?"Sincronizando…":(lastSyncErr?"Sin conexión — reintentará solo":(lastSyncedAt?"Sincronizado a las "+lastSyncedAt.toLocaleTimeString("es-CR",{hour:"2-digit",minute:"2-digit"}):"Conectado"));
-    desc.textContent="Tu código conecta este dispositivo con los demás. "+estado+".";
-    body.innerHTML=
-      '<div style="font-size:16px; font-weight:600; letter-spacing:1px; text-align:center; background:var(--card2); border-radius:10px; padding:12px; margin-bottom:10px;">'+syncCode+'</div>'+
-      '<div class="btnrow" style="margin-bottom:8px;">'+
-        '<button class="btn" id="syncCopyBtn">Copiar código</button>'+
-        '<button class="btn" id="syncNowBtn">Sincronizar ahora</button>'+
-      '</div>'+
-      '<button class="btn danger" id="syncOffBtn">Dejar de sincronizar este dispositivo</button>';
-    document.getElementById("syncCopyBtn").onclick=syncCopyCode;
-    document.getElementById("syncNowBtn").onclick=async function(){
-      this.textContent="Sincronizando…"; this.disabled=true;
-      await doSyncPull();
-      /* doSyncPull vuelve a dibujar Ajustes, así que buscamos el botón nuevo */
-      var el=document.getElementById("syncNowBtn");
-      if(el){
-        el.textContent = lastSyncErr ? "Sin conexión" : "✓ Sincronizado";
-        setTimeout(function(){
-          var e2=document.getElementById("syncNowBtn");
-          if(e2) e2.textContent="Sincronizar ahora";
-        },2000);
-      }
-    };
-    document.getElementById("syncOffBtn").onclick=syncDisconnect;
-  }
-}
-function stepPrev(w,d){
-  var p=st.previas[w];
-  p.n=Math.max(0,p.n+d);
-  save(); renderSettings();
-}
-function setApprox(w,v){st.previas[w].approx=v; save();}
-
-function exportData(btn){
-  var blob=new Blob([JSON.stringify(st,null,2)],{type:"application/json"});
-  var a=document.createElement("a");
-  a.href=URL.createObjectURL(blob);
-  a.download="lectura-biblica-respaldo-"+(new Date()).toISOString().slice(0,10)+".json";
-  document.body.appendChild(a); a.click(); document.body.removeChild(a);
-  if(btn){
-    var old=btn.innerHTML;
-    btn.textContent="✓ Exportado";
-    setTimeout(function(){ btn.innerHTML=old; },2000);
-  }
-}
-function importData(inp){
-  var f=inp.files[0]; if(!f) return;
-  var r=new FileReader();
-  r.onload=function(){
-    try{
-      var d=JSON.parse(r.result);
-      if(!validState(d)) throw new Error("formato");
-      modal("¿Restaurar este respaldo?","Reemplaza los datos actuales con los del archivo. No se puede deshacer.",
-        [
-          {t:"Sí, restaurar",p:true,f:function(){
-            /* al restaurar, marcamos todos los libros como recién cambiados; si no,
-               las fechas viejas del respaldo perderían la fusión contra la nube
-               y el respaldo se desharía solo en el siguiente ciclo de sincronización */
-            var now=Date.now();
-            d.base=d.base||0;
-            d.books.forEach(function(b){ b.rr=!!b.rr; b.oneShot=!!b.oneShot; b.ch=b.ch||[]; b.ts=now; });
-            st=d; save(); showHome();
-          }},
-          {t:"Cancelar"}
-        ]);
-    }catch(e){
-      modal("Archivo no válido","Ese archivo no parece un respaldo de esta app.",[{t:"Entendido",p:true}]);
-    }
-    inp.value="";
-  };
-  r.readAsText(f);
-}
-function wipeAsk(){
-  var txt = syncCode
-    ? "Se pierde el registro de este dispositivo y el respaldo en la nube, y se desconecta la sincronización. No se puede deshacer."
-    : "Se pierde todo el registro de este dispositivo. No se puede deshacer.";
-  modal("¿Borrar todos los datos?",txt,
-    [
-      {t:"Sí, borrar todo",p:true,f:function(){
-        modal("Última confirmación","¿De verdad querés borrar todo?",
-          [
-            {t:"Borrar definitivamente",p:true,f:function(){
-              var code=syncCode;
-              /* desconectar ANTES de guardar, para que el estado vacío no se suba
-                 y la fusión con otro dispositivo no lo reviva acá */
-              syncCode=null;
-              clearTimeout(syncTimer);
-              localStorage.removeItem(KEY);
-              localStorage.removeItem(CODEKEY);
-              localStorage.removeItem(ASKEDKEY);
-              st=newState();
-              saveLocal();
-              if(code){ cloudDelete(code).catch(function(){}); }
-              showHome();
-            }},
-            {t:"Cancelar"}
-          ]);
-      }},
-      {t:"Cancelar"}
-    ]);
-}
-
-function modal(title,text,buttons){
-  var host=document.getElementById("modalhost");
-  var h='<div class="overlay"><div class="modal"><h3>'+title+'</h3><p>'+text+'</p>';
-  buttons.forEach(function(b,ix){
-    /* el último botón (normalmente "Cancelar") es el que responde a la tecla Esc */
-    h+='<button class="btn'+(b.p?' primary':'')+'" data-ix="'+ix+'"'+(ix===buttons.length-1?' data-esc="1"':'')+'>'+b.t+'</button>';
-  });
-  h+='</div></div>';
-  host.innerHTML=h;
-  host.querySelectorAll("button").forEach(function(el){
-    el.onclick=function(){
-      var b=buttons[parseInt(el.dataset.ix,10)];
-      host.innerHTML="";
-      if(b.f) b.f();
-    };
-  });
-}
-
-/* Volver: gesto de deslizar (iPhone/iPad) y botón usan el historial real del navegador.
-   Esc: cierra un modal si hay uno abierto; si no, vuelve al inicio (igual que "Volver"). */
-history.replaceState({v:"home"},"");
-window.addEventListener("popstate",function(){ showHome(); });
-document.addEventListener("keydown",function(e){
-  if(e.key!=="Escape") return;
-  var host=document.getElementById("modalhost");
-  if(host.innerHTML.trim()!==""){
-    /* Esc equivale a tocar el botón de cancelar del modal, no a cerrarlo sin más;
-       así nunca queda un estado a medias (ej. libro 100% marcado sin contar). */
-    var eb=host.querySelector("[data-esc]");
-    if(eb){ eb.click(); } else { host.innerHTML=""; }
-    return;
-  }
-  if(!document.getElementById("view-home").classList.contains("hidden")) return;
-  history.back();
-});
-
-document.getElementById("footset").textContent="Mi lectura bíblica · versión "+APP_VERSION+" · Theos Place";
-document.getElementById("footbook").textContent="Mi lectura bíblica · versión "+APP_VERSION+" · Theos Place";
-showHome();
-syncStartupCheck();
-</script>
-</body>
-</html>
+  return
