@@ -382,12 +382,14 @@ function mergeStates(a,b){
 /*CORE-END*/
 
 /* Subir este número en cada commit para poder ver en el pie qué versión corre cada aparato. */
-var APP_VERSION="1.11 · 22 sep 2026";
+var APP_VERSION="1.12 · 1 oct 2026";
 
 var KEY="miLecturaBiblica_v1";          /* el nombre se queda igual para no perder datos guardados */
 var CODEKEY="miLecturaBiblica_codigo";
 var ASKEDKEY="miLecturaBiblica_syncAsked";
 var FILTERKEY="miLecturaBiblica_filtro";
+var PENDKEY="miLecturaBiblica_codigoNuevo";      /* código nuevo mientras se hace el cambio */
+var CHANGEDKEY="miLecturaBiblica_codigoCambiado"; /* otro aparato cambió el código: hay que pedirlo */
 var SUPA_URL="https://yxtdygqnnnuepeoqqbve.supabase.co";
 var SUPA_KEY="sb_publishable_XR77YLARzEeHNMqXcWjczw_7hlPV_w5";
 
@@ -435,34 +437,80 @@ function supaFetch(path,opts){
   },opts.headers||{});
   return fetch(SUPA_URL+path,opts);
 }
-async function cloudPull(code){
-  var r=await supaFetch("/rest/v1/lectura_biblica?codigo=eq."+encodeURIComponent(code)+"&select=datos");
-  if(!r.ok) throw new Error("pull "+r.status);
-  var rows=await r.json();
-  return rows.length?rows[0].datos:null;
+/* La base de datos no se puede leer directo: solo responde a estas cuatro funciones, y cada una
+   exige un código y toca solo ese registro (ver seguridad/cerrar-acceso.sql). Cada una responde
+   {estado:"ok"|"no_existe"|"viejo"|"cambiado"|...}. "viejo" = código de antes del 1 oct 2026,
+   que hay que cambiar; "cambiado" = código de antes que otro aparato ya cambió. */
+async function rpc(fn,args){
+  var r=await supaFetch("/rest/v1/rpc/"+fn,{method:"POST",body:JSON.stringify(args)});
+  if(!r.ok) throw new Error(fn+" "+r.status);
+  return await r.json();
 }
+function cloudPull(code){ return rpc("lb_bajar",{p_codigo:code}); }
 async function cloudPush(code,data){
-  var r=await supaFetch("/rest/v1/lectura_biblica?on_conflict=codigo",{
-    method:"POST",
-    headers:{"Prefer":"resolution=merge-duplicates,return=minimal"},
-    body:JSON.stringify([{codigo:code,datos:data,actualizado_en:new Date().toISOString()}])
-  });
-  if(!r.ok) throw new Error("push "+r.status);
+  var res=await rpc("lb_subir",{p_codigo:code,p_datos:data});
+  if(res.estado!=="ok") throw new Error("subir "+res.estado);
 }
-async function cloudDelete(code){
-  var r=await supaFetch("/rest/v1/lectura_biblica?codigo=eq."+encodeURIComponent(code),{method:"DELETE"});
-  if(!r.ok) throw new Error("delete "+r.status);
+function cloudDelete(code){ return rpc("lb_borrar",{p_codigo:code}); }
+function cloudRotate(oldCode,newCode){ return rpc("lb_cambiar",{p_viejo:oldCode,p_nuevo:newCode}); }
+
+/* Cambio de código por seguridad (1 oct 2026). El progreso pasa tal cual al código nuevo.
+   El código nuevo se guarda en el aparato ANTES de pedir el cambio: si algo se corta a medio
+   camino, la próxima vez se retoma con ese mismo código y no se pierde nada. */
+async function handleOldCode(code,estado){
+  var pend=localStorage.getItem(PENDKEY);
+  if(pend){
+    var p=await cloudPull(pend);
+    if(p.estado==="ok"){ adoptNewCode(pend); return; }
+  }
+  if(estado==="viejo"){
+    if(!pend){ pend=genCode(); localStorage.setItem(PENDKEY,pend); }
+    var r=await cloudRotate(code,pend);
+    if(r.estado==="ok"){ adoptNewCode(pend); return; }
+    if(r.estado!=="cambiado") throw new Error("cambio "+r.estado);
+  }
+  /* otro aparato ya lo cambió: este se desconecta (sus datos locales se quedan) y pide el nuevo */
+  if(code!==syncCode) return;
+  localStorage.removeItem(PENDKEY);
+  localStorage.removeItem(CODEKEY); syncCode=null; clearTimeout(syncTimer);
+  localStorage.setItem(CHANGEDKEY,"1");
+  showCodeChanged();
+}
+function adoptNewCode(code){
+  syncCode=code; localStorage.setItem(CODEKEY,code);
+  localStorage.removeItem(PENDKEY); localStorage.removeItem(CHANGEDKEY);
+  syncQueued=true;              /* otro ciclo enseguida, ya con el código nuevo */
+  refreshCurrentView();
+  modal("Tu código cambió",
+    "Por seguridad, la app le cambió el código a tu progreso. El anterior ya no sirve. "+
+    "Guardá este en Notas o donde guardés contraseñas, y borrá el viejo. "+
+    "Tu progreso sigue igual. Si usás la app en otro dispositivo, te lo va a pedir una vez.",
+    [{t:"Ya lo guardé",p:true}],
+    '<div class="codebox">'+code+'</div>');
+}
+function showCodeChanged(){
+  modal("Tu código cambió",
+    "Por seguridad, la app cambió el código de tu progreso. El código nuevo te apareció en el "+
+    "otro dispositivo donde abriste la app (también está en Ajustes ⚙ de ese dispositivo). "+
+    "Ingresalo acá para seguir sincronizando. Lo que tenés en este dispositivo no se pierde: "+
+    "se junta con lo de la nube.",
+    [
+      {t:"Ingresar el código nuevo",p:true,f:syncShowEnter},
+      {t:"Ahora no"}
+    ]);
 }
 /* Un ciclo: baja lo de la nube, lo junta con lo local y sube solo si la nube quedó atrasada.
    Siempre se baja antes de subir, así nunca se sobreescribe un cambio de otro aparato. */
 async function syncOnce(){
   var code=syncCode;
   try{
-    var raw=await cloudPull(code);
+    var res=await cloudPull(code);
     if(code!==syncCode) return;               /* se desconectó mientras tanto */
+    if(res.estado==="viejo" || res.estado==="cambiado"){ await handleOldCode(code,res.estado); return; }
+    if(res.estado!=="ok" && res.estado!=="no_existe") throw new Error("bajar "+res.estado);
     var remote=null;
-    if(raw){
-      remote=upgradeState(raw);
+    if(res.estado==="ok"){
+      remote=upgradeState(res.datos);
       if(!remote) throw new Error("datos de la nube no válidos");
     }
     var merged=remote?mergeStates(st,remote):st;
@@ -558,6 +606,7 @@ function showSyncSetup(){
 function syncCreateNew(){
   var code=genCode();
   localStorage.setItem(CODEKEY,code); markAsked();
+  localStorage.removeItem(CHANGEDKEY);
   syncCode=code;
   sync(); startSyncLoop();
   modal("Este es tu código",
@@ -587,14 +636,25 @@ async function syncLinkWithCode(){
   markAsked();
   modal("Conectando…","Buscando tu progreso guardado.",[]);
   try{
-    var remote=upgradeState(await cloudPull(code));
+    var res=await cloudPull(code);
+    if(res.estado==="cambiado"){
+      showLinkError("Ese código ya no sirve","Ese código se cambió por seguridad. Usá el código nuevo que te apareció en tu otro dispositivo (también está en Ajustes ⚙ de ese dispositivo).");
+      return;
+    }
+    if(res.estado==="viejo"){
+      /* código de antes: se adopta y el ciclo de sincronización lo cambia y muestra el nuevo */
+      syncCode=code; localStorage.setItem(CODEKEY,code); localStorage.removeItem(CHANGEDKEY);
+      closeModal(); sync(); startSyncLoop(); goHome();
+      return;
+    }
+    var remote=res.estado==="ok"?upgradeState(res.datos):null;
     /* si el código no existe en la nube NO se adopta: casi seguro está mal escrito, y
        adoptarlo crearía un registro aparte que nunca se juntaría con el verdadero */
     if(!remote){
       showLinkError("Código no encontrado","No hay ningún progreso guardado con ese código. Revisá que esté bien escrito, o creá un código nuevo si este es tu primer dispositivo.");
       return;
     }
-    syncCode=code; localStorage.setItem(CODEKEY,code);
+    syncCode=code; localStorage.setItem(CODEKEY,code); localStorage.removeItem(CHANGEDKEY);
     st=mergeStates(st,remote); saveLocal();
     closeModal();
     sync(); startSyncLoop();
@@ -889,7 +949,7 @@ function wipeAsk(){
               /* desconectar ANTES de guardar, para que el estado vacío no se suba
                  y la fusión con otro dispositivo no lo reviva acá */
               syncCode=null; clearTimeout(syncTimer);
-              [KEY,CODEKEY,ASKEDKEY,FILTERKEY].forEach(function(k){ localStorage.removeItem(k); });
+              [KEY,CODEKEY,ASKEDKEY,FILTERKEY,PENDKEY,CHANGEDKEY].forEach(function(k){ localStorage.removeItem(k); });
               st=newState(); filter="all"; saveLocal();
               if(code) cloudDelete(code).catch(function(){});
               goHome();
@@ -971,6 +1031,7 @@ window.addEventListener("popstate",showHome);
 history.replaceState({v:"home"},"");
 showHome();
 if(syncCode){ sync(); startSyncLoop(); }
+else if(localStorage.getItem(CHANGEDKEY)) showCodeChanged();
 else if(!localStorage.getItem(ASKEDKEY)) showWelcome();
 </script>
 </body>
